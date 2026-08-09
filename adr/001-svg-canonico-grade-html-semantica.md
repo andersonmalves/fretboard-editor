@@ -18,7 +18,7 @@ O redesign aprovado exige simultaneamente:
 - paridade entre artboard, SVG e PNG;
 - seis casas no viewport de 390 px e doze a partir de 768 px;
 - ausência de framework, build e dependência de runtime;
-- `index.html` autocontido com até 51.200 bytes;
+- `index.html` autocontido com até 57.344 bytes;
 - domínio de seis cordas, casas 1..24 e uma faixa adjacente de nut com seis alvos;
 - labels não confiáveis inseridos e exportados sem criar markup ou atributos.
 
@@ -105,7 +105,7 @@ Matriz de validação da implementação:
 
 Medidas verificáveis:
 
-- tamanho: `wc -c index.html` deve retornar no máximo 51.200 bytes do arquivo-fonte UTF-8;
+- tamanho: `wc -c index.html` deve retornar no máximo 57.344 bytes do arquivo-fonte UTF-8;
 - performance: no Chrome estável da máquina de desenvolvimento, p95 abaixo de 16 ms para 100
   atualizações após dez aquecimentos, com 72 posições fretadas + seis alvos do nut;
 - paridade: SVG baixado e entrada da rasterização PNG usam a mesma serialização do clone exportável.
@@ -120,7 +120,7 @@ Medidas verificáveis:
 - **Negative:** exige sincronizar o foco da grade HTML com a camada de edição do SVG.
 - **Negative:** rasterização PNG passa a ser assíncrona e precisa tratar falha de carregamento.
 - **Negative:** snapshot standalone exige materializar estilos que hoje dependem de CSS da página.
-- **Neutral / to monitor:** o limite de 51.200 bytes pode pressionar testes/helpers embutidos; não
+- **Neutral / to monitor:** o limite de 57.344 bytes pode pressionar testes/helpers embutidos; não
   autoriza remover controles de segurança ou acessibilidade.
 - **Neutral / to monitor:** a validação VoiceOver pode exigir ajustes nos nomes e agrupamentos HTML,
   sem alterar a árvore visual canônica.

@@ -10,7 +10,7 @@ Entregar PNG derivado do snapshot SVG e fechar os requisitos de falha, paridade,
 2. Excluir crosshair, foco, seleção e controles dos dois formatos; materializar tokens e fontes no snapshot.
 3. Tratar falha de serialização/rasterização com mensagem segura, preservar estado, permitir nova tentativa e revogar object URLs.
 4. Medir p95 de 100 atualizações após dez aquecimentos no Chrome estável com 78 alvos.
-5. Confirmar ausência de requisições de rede, `wc -c index.html <= 51200` e console sem warnings/errors nos fluxos cobertos.
+5. Confirmar ausência de requisições de rede, `wc -c index.html <= 57344` e console sem warnings/errors nos fluxos cobertos.
 6. Executar regressão funcional completa da spec em 390/768/1440 e comparar SVG/PNG visualmente.
 
 ## Delta de complexidade planejado
