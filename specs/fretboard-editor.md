@@ -228,6 +228,7 @@ interface Marker {
 
 interface DiagramContent {
   tuningPresetId: string;
+  diagramTitle: string;
   markers: Marker[];
 }
 
@@ -262,6 +263,8 @@ Invariantes:
 - `muted` é válido somente na casa 0; `outline` na casa 0 representa corda solta.
 - `color` é `null` ou um token CSS `--color-marker-*` da paleta canônica; `null` resolve para
   `--color-marker-default` (`var(--color-selection)`). Marcadores `muted` ignoram cor no desenho.
+- `diagramTitle` é normalizado com trim, aceita no máximo 40 caracteres visíveis, rejeita
+  caracteres de controle e usa `FRETBOARD / 06 STRING` quando vazio após normalização.
 - A ferramenta de cor ativa (`activeMarkerColor`) é sticky como o tipo: não cria snapshots de
   histórico e não é resetada ao desmarcar.
 - Histórico registra somente criação, edição, remoção, limpeza e mudança de afinação. Seleção,
@@ -403,6 +406,8 @@ isoladamente por seu commit se seu contrato ainda não for dependência de step 
   swatches; a cor escolhida é aplicada ao próximo marcador ou ao selecionado; o valor persiste em
   undo/redo e troca de afinação; exportação SVG reproduz a cor resolvida; texto do marcador
   preenchido usa contraste legível (tinta ou branco conforme luminância do fill).
+- [ ] AC-38: O título do diagrama é editável na barra de comandos; alterações refletem no SVG e na
+  exportação; título vazio restaura o padrão; undo/redo inclui mudanças de título.
 - [ ] AC-32: A aplicação não faz requisições de rede em runtime e `wc -c index.html` retorna no
   máximo 51.200 bytes.
 - [ ] AC-33: Com reduced motion ativo, nenhuma transição ou animação não essencial permanece.

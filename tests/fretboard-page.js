@@ -36,6 +36,7 @@ class FretboardPage {
     this.hint = page.locator("#board-hint");
     this.kicker = page.locator("#selection-kicker");
     this.colorGroup = page.locator("#color-group");
+    this.diagramTitle = page.locator("#diagram-title");
     this.consoleErrors = [];
   }
 
@@ -101,6 +102,17 @@ class FretboardPage {
 
   async setLabel(texto) {
     await this.label.fill(texto);
+  }
+
+  async setDiagramTitle(texto) {
+    await this.diagramTitle.fill(texto);
+    await this.diagramTitle.blur();
+  }
+
+  async typeDiagramTitle(texto) {
+    await this.diagramTitle.click();
+    await this.diagramTitle.fill(texto);
+    await this.diagramTitle.blur();
   }
 
   /** Digita tecla a tecla no fim do campo, sem limpar — reproduz digitacao humana. */

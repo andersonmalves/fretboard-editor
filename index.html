@@ -64,6 +64,7 @@ h1{margin:0;font-size:clamp(1.35rem,2.2vw,2rem);font-weight:680;letter-spacing:-
 .field{display:grid;gap:5px;min-width:0}
 .field>label,.field-label{color:var(--color-text-muted);font-size:.72rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase}
 .field.tuning{min-width:210px}
+.field.title{flex:1;min-width:180px;max-width:360px}
 .field.position{width:160px}
 .control,.button{min-height:44px;border:1px solid var(--color-border);border-radius:var(--radius-sm);background:var(--color-panel-raised);color:var(--color-text-primary)}
 .control{width:100%;padding:9px 11px}
@@ -126,7 +127,7 @@ kbd{display:inline-block;min-width:25px;padding:2px 5px;border:1px solid var(--c
 }
 @media(max-width:600px){
   .app{padding:12px}.masthead{align-items:center;margin-bottom:14px}.edition{display:none}.brand-mark{width:38px;height:38px}.masthead p{font-size:.78rem}
-  .command-bar{display:grid;grid-template-columns:1fr auto;padding:10px}.field.tuning,.field.position{width:auto;min-width:0}.field.position{grid-column:1/-1}.position-control{grid-template-columns:44px 1fr 44px}.history-cluster{grid-column:2;grid-row:1}.export-cluster{grid-column:1/-1;margin-top:0}.export-cluster .button{flex:1}.clear-button{grid-column:1/-1;margin-top:0}
+  .command-bar{display:grid;grid-template-columns:1fr auto;padding:10px}.field.tuning,.field.position,.field.title{width:auto;min-width:0}.field.title{grid-column:1/-1}.field.position{grid-column:1/-1}.position-control{grid-template-columns:44px 1fr 44px}.history-cluster{grid-column:2;grid-row:1}.export-cluster{grid-column:1/-1;margin-top:0}.export-cluster .button{flex:1}.clear-button{grid-column:1/-1;margin-top:0}
   .workspace{gap:10px}.panel-header{padding:11px 12px}.artboard-pad{padding:7px}.board-canvas{aspect-ratio:12/11}.board-caption{display:block}.board-caption span{display:block;text-align:left!important}
   .inspector-body{display:grid;grid-template-columns:1fr;padding:14px}.inspector-actions,.shortcut-list{grid-column:auto}.grid-cell{min-width:44px;min-height:44px}.status{position:fixed;z-index:10;left:12px;right:12px;bottom:12px;margin:0;padding:11px 13px;border:1px solid var(--color-border);border-radius:var(--radius-sm);background:var(--color-panel-bg);box-shadow:0 8px 20px var(--color-shadow);opacity:0;pointer-events:none}.status.visible{opacity:1}
 }
@@ -161,6 +162,10 @@ kbd{display:inline-block;min-width:25px;padding:2px 5px;border:1px solid var(--c
         <button class="button icon" id="next-fret" type="button" aria-label="Avançar uma casa">→</button>
       </div>
       <p class="error" id="start-fret-error"></p>
+    </div>
+    <div class="field title">
+      <label for="diagram-title">Título do diagrama</label>
+      <input class="control" id="diagram-title" type="text" maxlength="48" placeholder="FRETBOARD / 06 STRING" autocomplete="off">
     </div>
     <div class="command-spacer"></div>
     <div class="button-cluster history-cluster" aria-label="Histórico">
@@ -253,6 +258,7 @@ const MARKER_COLORS=[
   {value:"--color-marker-pink",label:"Rosa",token:"--color-marker-pink"},
   {value:"--color-marker-gray",label:"Cinza",token:"--color-marker-gray"}
 ];
+const DEFAULT_DIAGRAM_TITLE="FRETBOARD / 06 STRING";
 const MUTED_ONLY_AT_NUT="Marcador abafado só pode ser usado no nut, casa 0.";
 const FILLED_NORMALIZED_AT_NUT="Na casa 0 o marcador preenchido vira vazado, que representa corda solta.";
 
@@ -265,17 +271,19 @@ const refs={
   readout:document.querySelector("#window-readout"),coordinate:document.querySelector("#selection-coordinate"),badge:document.querySelector("#note-badge"),
   kicker:document.querySelector("#selection-kicker"),selectionName:document.querySelector("#selection-name"),status:document.querySelector("#status"),
   hint:document.querySelector("#board-hint"),
-  colorGroup:document.querySelector("#color-group")
+  colorGroup:document.querySelector("#color-group"),
+  diagramTitle:document.querySelector("#diagram-title")
 };
 
-const editor={startFret:0,visibleFrets:compactMedia.matches?6:12,selectedMarkerId:null,activeMarkerType:"filled",activeMarkerColor:null,activeCustomLabel:"",focusedPosition:{stringIndex:0,fret:0}};
-const history={past:[],present:{tuningPresetId:"standard",markers:[]},future:[]};
+const editor={startFret:0,visibleFrets:compactMedia.matches?6:12,selectedMarkerId:null,activeMarkerType:"filled",activeMarkerColor:null,activeCustomLabel:"",diagramTitleDraft:null,focusedPosition:{stringIndex:0,fret:0}};
+const history={past:[],present:{tuningPresetId:"standard",diagramTitle:DEFAULT_DIAGRAM_TITLE,markers:[]},future:[]};
 let markerSequence=0;
 let statusSequence=0;
 let statusTimer=0;
 let labelDraftFor=null;
 
-function cloneContent(content){return {tuningPresetId:content.tuningPresetId,markers:content.markers.map(marker=>({...marker}))}}
+function cloneContent(content){return {tuningPresetId:content.tuningPresetId,diagramTitle:content.diagramTitle??DEFAULT_DIAGRAM_TITLE,markers:content.markers.map(marker=>({...marker}))}}
+function displayedDiagramTitle(){return editor.diagramTitleDraft??history.present.diagramTitle??DEFAULT_DIAGRAM_TITLE}
 function markerAt(stringIndex,fret,content=history.present){return content.markers.find(marker=>marker.stringIndex===stringIndex&&marker.fret===fret)||null}
 function selectedMarker(){return history.present.markers.find(marker=>marker.id===editor.selectedMarkerId)||null}
 function currentTuning(){return TUNINGS[history.present.tuningPresetId]}
@@ -291,6 +299,7 @@ function offscreenNotice(){const count=hiddenMarkers().length;return count?`${co
 function offscreenSuffix(){const notice=offscreenNotice();return notice?` ${notice}.`:""}
 function exportWarning(){const count=hiddenMarkers().length;return count?` ${offscreenNotice()} ${count===1?"não entrou":"não entraram"} no arquivo.`:""}
 function normalizeLabel(value){return Array.from(value.replace(/[\u0000-\u001f\u007f]/g,"").replace(/\s+/g," ").trim()).slice(0,6).join("")}
+function normalizeDiagramTitle(value){const clean=Array.from(value.replace(/[\u0000-\u001f\u007f]/g,"").replace(/\s+/g," ").trim()).slice(0,40).join("");return clean||DEFAULT_DIAGRAM_TITLE}
 function normalizeType(type,fret){return fret===0&&type==="filled"?"outline":type}
 function parsePitch(value){const match=/^([A-G])([#b]?)(-?\d)$/.exec(value);if(!match)throw new Error("Nota de afinação inválida");const base={C:0,D:2,E:4,F:5,G:7,A:9,B:11}[match[1]];const accidental=match[2]==="#"?1:match[2]==="b"?-1:0;return (Number(match[3])+1)*12+base+accidental}
 function noteAt(stringIndex,fret){const tuning=currentTuning();const pitch=parsePitch(tuning.notes[stringIndex])+fret;const notes=tuning.accidentalStyle==="flat"?FLAT_NOTES:SHARP_NOTES;return {pitchClass:notes[((pitch%12)+12)%12],octave:Math.floor(pitch/12)-1}}
@@ -300,14 +309,14 @@ function positionLabel(stringIndex,fret){const note=noteAt(stringIndex,fret);con
 function announce(message,isError=false){statusSequence+=1;refs.status.textContent=`${message}${statusSequence%2?"":" "}`;refs.status.style.color=isError?"var(--color-error)":"var(--color-success)";refs.status.classList.add("visible");window.clearTimeout(statusTimer);statusTimer=window.setTimeout(()=>refs.status.classList.remove("visible"),4000)}
 function keepSelectionValid(){if(editor.selectedMarkerId&&!selectedMarker())editor.selectedMarkerId=null}
 function commitContent(mutator,message,preferredSelection){
-  labelDraftFor=null;
+  labelDraftFor=null;editor.diagramTitleDraft=null;
   const previous=cloneContent(history.present);const next=cloneContent(history.present);mutator(next);
   if(JSON.stringify(previous)===JSON.stringify(next))return false;
   history.past.push(previous);if(history.past.length>HISTORY_LIMIT)history.past.shift();history.present=next;history.future=[];
   editor.selectedMarkerId=preferredSelection===undefined?editor.selectedMarkerId:preferredSelection;keepSelectionValid();render();announce(message);return true
 }
-function undo(){if(!history.past.length){announce("Nada para desfazer.",true);return}labelDraftFor=null;const current=cloneContent(history.present);const target=history.past.pop();history.future.unshift(current);if(history.future.length>HISTORY_LIMIT)history.future.pop();history.present=target;const restored=target.markers.filter(marker=>!current.markers.some(item=>item.id===marker.id));editor.selectedMarkerId=restored.length===1?restored[0].id:null;render();announce("Ação desfeita.")}
-function redo(){if(!history.future.length){announce("Nada para refazer.",true);return}labelDraftFor=null;const current=cloneContent(history.present);const target=history.future.shift();history.past.push(current);if(history.past.length>HISTORY_LIMIT)history.past.shift();history.present=target;const added=target.markers.filter(marker=>!current.markers.some(item=>item.id===marker.id));editor.selectedMarkerId=added.length===1?added[0].id:null;render();announce("Ação refeita.")}
+function undo(){if(!history.past.length){announce("Nada para desfazer.",true);return}labelDraftFor=null;editor.diagramTitleDraft=null;const current=cloneContent(history.present);const target=history.past.pop();history.future.unshift(current);if(history.future.length>HISTORY_LIMIT)history.future.pop();history.present=target;const restored=target.markers.filter(marker=>!current.markers.some(item=>item.id===marker.id));editor.selectedMarkerId=restored.length===1?restored[0].id:null;render();announce("Ação desfeita.")}
+function redo(){if(!history.future.length){announce("Nada para refazer.",true);return}labelDraftFor=null;editor.diagramTitleDraft=null;const current=cloneContent(history.present);const target=history.future.shift();history.past.push(current);if(history.past.length>HISTORY_LIMIT)history.past.shift();history.present=target;const added=target.markers.filter(marker=>!current.markers.some(item=>item.id===marker.id));editor.selectedMarkerId=added.length===1?added[0].id:null;render();announce("Ação refeita.")}
 
 function setActiveType(type){editor.activeMarkerType=type;document.querySelectorAll(".type-button").forEach(button=>button.setAttribute("aria-pressed",String(button.dataset.type===type)))}
 function setActiveColor(color){editor.activeMarkerColor=color;refs.colorGroup.querySelectorAll(".color-swatch").forEach(swatch=>{const checked=swatch.dataset.color===String(color??"");swatch.setAttribute("aria-checked",String(checked));swatch.setAttribute("tabindex",checked?"0":"-1")})}
@@ -351,11 +360,11 @@ function geometry(){const frets=visibleFretNumbers();const nut=nutVisible();cons
 function positionX(geo,fret){if(fret===0)return geo.nut?geo.nutX+geo.nutWidth/2:null;const index=geo.frets.indexOf(fret);return index<0?null:geo.fretX(index)}
 
 function renderSvg(){
-  const colors=palette();const geo=geometry();const fontScale=editor.visibleFrets===6?3.1:GEOMETRY.height>440?1.6:1;const root=document.createDocumentFragment();
+  const colors=palette();const geo=geometry();const fontScale=editor.visibleFrets===6?3.1:GEOMETRY.height>440?1.6:1;const title=displayedDiagramTitle();const titleBudget=GEOMETRY.width-GEOMETRY.left-GEOMETRY.right;const root=document.createDocumentFragment();
   refs.svg.setAttribute("viewBox",`0 0 ${GEOMETRY.width} ${GEOMETRY.height}`);
-  append(root,"title",{id:"svg-title"},"Diagrama do braço");append(root,"desc",{id:"svg-description"},`Violão ou guitarra de seis cordas, afinação ${currentTuning().name}, casas ${geo.frets[0]} a ${geo.frets.at(-1)}${geo.nut?", a partir do nut":`, ${editor.startFret}ª posição`}.`);
+  append(root,"title",{id:"svg-title"},title);append(root,"desc",{id:"svg-description"},`Violão ou guitarra de seis cordas, afinação ${currentTuning().name}, casas ${geo.frets[0]} a ${geo.frets.at(-1)}${geo.nut?", a partir do nut":`, ${editor.startFret}ª posição`}.`);
   append(root,"rect",{width:GEOMETRY.width,height:GEOMETRY.height,fill:colors.artboard});
-  append(root,"text",{x:GEOMETRY.left,y:38,fill:colors.ink,"font-size":15*fontScale,"font-family":"ui-monospace, monospace","font-weight":700,"letter-spacing":2},"FRETBOARD / 06 STRING");
+  append(root,"text",{x:GEOMETRY.left,y:38,fill:colors.ink,"font-size":15*fontScale,"font-family":"ui-monospace, monospace","font-weight":700,"letter-spacing":2,"data-fit":titleBudget},title);
   append(root,"line",{x1:GEOMETRY.left,y1:55,x2:GEOMETRY.width-GEOMETRY.right,y2:55,stroke:colors.rule,"stroke-width":1});
   if(geo.nut){
     append(root,"rect",{x:geo.nutX,y:GEOMETRY.top-24,width:geo.nutWidth,height:GEOMETRY.bottom-GEOMETRY.top+48,fill:colors.rule});
@@ -398,11 +407,12 @@ function renderGrid(){
 function handleGridKey(event){const stringIndex=Number(event.currentTarget.dataset.stringIndex);const fret=Number(event.currentTarget.dataset.fret);const columns=visiblePositions();let row=stringIndex;let column=columns.indexOf(fret);if(event.key==="ArrowLeft")column=Math.max(0,column-1);else if(event.key==="ArrowRight")column=Math.min(columns.length-1,column+1);else if(event.key==="ArrowUp")row=Math.max(0,row-1);else if(event.key==="ArrowDown")row=Math.min(5,row+1);else if(event.key==="Home")column=0;else if(event.key==="End")column=columns.length-1;else return;event.preventDefault();const target=refs.grid.querySelector(`[data-string-index="${row}"][data-fret="${columns[column]}"]`);if(target){editor.focusedPosition={stringIndex:row,fret:columns[column]};target.focus()}}
 
 function mirrorLabel(value){if(refs.label.value!==value)refs.label.value=value}
+function mirrorDiagramTitle(value){if(refs.diagramTitle.value!==value)refs.diagramTitle.value=value}
 function renderInspector(){
   const marker=selectedMarker();refs.remove.disabled=!marker;refs.deselect.disabled=!marker;refs.clear.disabled=!history.present.markers.length;refs.undo.disabled=!history.past.length;refs.redo.disabled=!history.future.length;refs.previous.disabled=editor.startFret===0;refs.next.disabled=editor.startFret>=maxStartFret();
   if(marker){const note=noteAt(marker.stringIndex,marker.fret);const shown=displayLabel(marker);editor.activeCustomLabel=marker.customLabel;setActiveType(marker.type);setActiveColor(marker.color??null);refs.badge.textContent=shown;refs.badge.dataset.long=String(shown.length>3);refs.kicker.textContent=marker.customLabel?`Rótulo ${marker.customLabel} · nota ${spokenNote(note)}`:`Nota ${spokenNote(note)}`;refs.selectionName.textContent=`Corda ${marker.stringIndex+1} · ${marker.fret===0?"nut":`casa ${marker.fret}`}`;refs.coordinate.textContent=`S${marker.stringIndex+1} / F${String(marker.fret).padStart(2,"0")}`;mirrorLabel(marker.customLabel)}else{refs.badge.textContent="—";refs.badge.dataset.long="false";refs.kicker.textContent="Nenhum marcador";refs.selectionName.textContent="Escolha uma posição";refs.coordinate.textContent="—";mirrorLabel(editor.activeCustomLabel)}
   const frets=visibleFretNumbers();refs.readout.textContent=frets.length?`${nutVisible()?"NUT + ":""}${String(frets[0]).padStart(2,"0")}—${String(frets.at(-1)).padStart(2,"0")}`:"NUT";refs.tuning.value=history.present.tuningPresetId;
-  const notice=offscreenNotice();refs.hint.textContent=notice||"Nota calculada pela afinação";refs.hint.classList.toggle("offscreen",Boolean(notice))
+  const notice=offscreenNotice();refs.hint.textContent=notice||"Nota calculada pela afinação";refs.hint.classList.toggle("offscreen",Boolean(notice));mirrorDiagramTitle(displayedDiagramTitle())
 }
 function render(){const restoreGridFocus=document.activeElement?.classList.contains("grid-cell");keepSelectionValid();renderSvg();renderGrid();renderInspector();if(restoreGridFocus){const {stringIndex,fret}=editor.focusedPosition;refs.grid.querySelector(`[data-string-index="${stringIndex}"][data-fret="${fret}"]`)?.focus({preventScroll:true})}}
 
@@ -414,6 +424,9 @@ refs.undo.addEventListener("click",undo);refs.redo.addEventListener("click",redo
 document.querySelectorAll(".type-button").forEach(button=>button.addEventListener("click",()=>{const requested=button.dataset.type;const marker=selectedMarker();setActiveType(requested);if(!marker){announce(`Ferramenta ${TYPE_NAMES[requested]} ativa.`);return}if(requested==="muted"&&marker.fret!==0){announce(`${MUTED_ONLY_AT_NUT} Ferramenta abafado ativa para o próximo marcador.`,true);return}const type=normalizeType(requested,marker.fret);if(type!==requested){announce(FILLED_NORMALIZED_AT_NUT);if(marker.type===type){setActiveType(type);return}}editSelected({type},`Marcador alterado para ${TYPE_NAMES[type]}.`)}));
 refs.label.addEventListener("input",event=>{const clean=normalizeLabel(event.target.value);editor.activeCustomLabel=clean;if(event.target.value!==clean)event.target.value=clean;const marker=selectedMarker();if(!marker||marker.customLabel===clean)return;const message=clean?`Rótulo alterado para ${clean}.`:"Rótulo automático restaurado.";if(labelDraftFor===marker.id){history.present.markers.find(item=>item.id===marker.id).customLabel=clean;render();announce(message);return}editSelected({customLabel:clean},message);labelDraftFor=marker.id});
 refs.label.addEventListener("blur",()=>{labelDraftFor=null});
+refs.diagramTitle.addEventListener("focus",()=>{editor.diagramTitleDraft=history.present.diagramTitle});
+refs.diagramTitle.addEventListener("input",event=>{const clean=normalizeDiagramTitle(event.target.value);editor.diagramTitleDraft=clean;if(event.target.value!==clean)event.target.value=clean;renderSvg()});
+refs.diagramTitle.addEventListener("blur",()=>{const clean=editor.diagramTitleDraft??normalizeDiagramTitle(refs.diagramTitle.value);const previous=history.present.diagramTitle;editor.diagramTitleDraft=null;if(clean===previous){mirrorDiagramTitle(previous);return}commitContent(content=>{content.diagramTitle=clean},clean===DEFAULT_DIAGRAM_TITLE?"Título restaurado ao padrão.":`Título alterado para ${clean}.`)});
 
 document.addEventListener("keydown",event=>{const editable=event.target instanceof HTMLInputElement||event.target instanceof HTMLSelectElement;if((event.metaKey||event.ctrlKey)&&event.key.toLowerCase()==="z"){event.preventDefault();event.shiftKey?redo():undo();return}if(editable)return;if(event.key==="Escape"){event.preventDefault();deselect()}else if((event.key==="Delete"||event.key==="Backspace")&&selectedMarker()){event.preventDefault();removeSelected()}});
 function updateResponsiveGeometry(){editor.visibleFrets=compactMedia.matches?6:12;Object.assign(GEOMETRY,compactMedia.matches||touchMedia.matches?expandedGeometry:desktopGeometry);setStartFret(editor.startFret,"silent")}
