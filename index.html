@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fretboard Diagram Editor</title>
+<style>
+:root {
+  --bg: #1a1a2e;
+  --surface: #16213e;
+  --text: #e0e0e0;
+  --accent: #e94560;
+  --border: #2a2a4a;
+  --string: #c9a96e;
+  --fret: #888;
+  --marker-fill: #e94560;
+  --marker-stroke: #fff;
+  --fretboard-bg: #2d1b0e;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+}
+
+header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+header h1 {
+  font-size: 1.6rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+header p {
+  color: #888;
+  font-size: 0.85rem;
+  margin-top: 4px;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+  padding: 10px 16px;
+  background: var(--surface);
+  border-radius: 8px;
+  max-width: 900px;
+  width: 100%;
+}
+
+.toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.toolbar label {
+  font-size: 0.78rem;
+  color: #aaa;
+  white-space: nowrap;
+}
+
+.toolbar select,
+.toolbar input[type="number"],
+.toolbar input[type="text"] {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 0.82rem;
+  font-family: inherit;
+}
+
+.toolbar select { min-width: 80px; }
+.toolbar input[type="number"] { width: 55px; text-align: center; }
+.toolbar input[type="text"] { width: 100px; }
+
+.btn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 14px;
+  font-size: 0.82rem;
+  font-family: inherit;
+  cursor: pointer;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: opacity 0.15s;
+}
+.btn:hover { opacity: 0.85; }
+.btn:active { opacity: 0.7; }
+.btn.ghost {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: #ccc;
+}
+.btn.ghost:hover { background: var(--border); }
+
+.marker-types {
+  display: flex;
+  gap: 4px;
+}
+.marker-types .btn {
+  padding: 4px 10px;
+  font-size: 0.78rem;
+}
+.marker-types .btn.active {
+  background: #fff;
+  color: var(--bg);
+}
+
+.canvas-wrap {
+  background: var(--surface);
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+}
+canvas {
+  display: block;
+  cursor: pointer;
+}
+
+footer {
+  margin-top: 16px;
+  font-size: 0.72rem;
+  color: #555;
+}
+footer kbd {
+  background: var(--surface);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: inherit;
+  font-size: 0.72rem;
+  border: 1px solid var(--border);
+}
+
+.selected-info {
+  font-size: 0.78rem;
+  color: #aaa;
+  min-width: 140px;
+  text-align: center;
+}
+.selected-info strong { color: var(--text); }
+
+.separator {
+  width: 1px;
+  height: 22px;
+  background: var(--border);
+  margin: 0 4px;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Fretboard Diagram Editor</h1>
+  <p>Clique nas interseções corda × casa para adicionar/remover marcadores</p>
+</header>
+
+<div class="toolbar" id="toolbar">
+  <div class="toolbar-group">
+    <label for="tuning-select">Afinação</label>
+    <select id="tuning-select">
+      <option value="E2,A2,D3,G3,B3,E4">Standard (EADGBE)</option>
+      <option value="D2,A2,D3,G3,B3,E4">Drop D (DADGBE)</option>
+      <option value="Eb2,Ab2,Db3,Gb3,Bb3,Eb4">Eb Standard</option>
+      <option value="D2,G2,D3,G3,B3,D4">Open G (DGDGBD)</option>
+      <option value="C2,G2,C3,G3,C4,E4">Open C (CGCGCE)</option>
+    </select>
+  </div>
+  <div class="separator"></div>
+  <div class="marker-types" id="marker-types">
+    <button class="btn active" data-type="filled" title="Nota tocada">●</button>
+    <button class="btn" data-type="open" title="Corda solta">○</button>
+    <button class="btn" data-type="x" title="Corda abafada">✕</button>
+  </div>
+  <div class="separator"></div>
+  <div class="toolbar-group">
+    <label for="start-fret">Casa inicial</label>
+    <input type="number" id="start-fret" value="1" min="0" max="20">
+  </div>
+  <div class="separator"></div>
+  <div class="toolbar-group">
+    <label for="label-input">Rótulo</label>
+    <input type="text" id="label-input" placeholder="ex: R, 3, 5" maxlength="6">
+  </div>
+  <div class="separator"></div>
+  <button class="btn ghost" id="clear-btn">Limpar</button>
+  <button class="btn" id="export-png">PNG</button>
+  <button class="btn" id="export-svg">SVG</button>
+</div>
+
+<div class="canvas-wrap">
+  <canvas id="canvas"></canvas>
+</div>
+
+<footer>
+  Atalhos: <kbd>0-9</kbd> seleciona casa inicial · <kbd>Esc</kbd> limpar · <kbd>S</kbd> SVG · 
+  <kbd>P</kbd> PNG · <kbd>F</kbd> preenchido · <kbd>O</kbd> aberto · <kbd>X</kbd> abafado
+</footer>
+
+<script>
+// ─── Musical Constants ────────────────────────────────
+const CHROMATIC = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const DEFAULT_TUNING = ['E2','A2','D3','G3','B3','E4'];
+
+// ─── Parse note like "E2" → MIDI-like absolute semitone ──
+function noteToSemitone(note) {
+  const match = note.match(/^([A-G]#?)(\d)$/);
+  if (!match) return 0;
+  const [, name, octave] = match;
+  const idx = CHROMATIC.indexOf(name);
+  if (idx === -1) return 0;
+  return idx + (parseInt(octave) + 1) * 12;
+}
+function semitoneToNote(semitone) {
+  const name = CHROMATIC[semitone % 12];
+  const octave = Math.floor(semitone / 12) - 1;
+  return name + octave;
+}
+
+// ─── State ──────────────────────────────────────────────
+const state = {
+  tuning: [...DEFAULT_TUNING],
+  startFret: 1,
+  visibleFrets: 12,
+  strings: 6,
+  markers: [],            // { string, fret, type, label }
+  activeType: 'filled',
+  hovered: null,          // { string, fret }
+  labelText: '',
+};
+
+// ─── Initialize from tuning select ─────────────────────
+function applyTuning(tuningStr) {
+  state.tuning = tuningStr.split(',');
+  state.strings = state.tuning.length;
+  state.markers = [];  // reset markers on tuning change
+  draw();
+}
+document.getElementById('tuning-select').addEventListener('change', (e) => {
+  applyTuning(e.target.value);
+});
+
+// ─── Canvas setup ──────────────────────────────────────
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+const PADDING = 60;
+const CELL_W = 52;
+const CELL_H = 36;
+const NUT_W = 10;
+const STRING_LABEL_W = 44;
+const FRET_TOP = 36;
+
+function canvasWidth() {
+  return STRING_LABEL_W + PADDING + state.visibleFrets * CELL_W + PADDING;
+}
+function canvasHeight() {
+  return FRET_TOP + PADDING + state.strings * CELL_H + PADDING;
+}
+
+function resizeCanvas() {
+  const dpr = window.devicePixelRatio || 1;
+  const w = canvasWidth();
+  const h = canvasHeight();
+  canvas.style.width = w + 'px';
+  canvas.style.height = h + 'px';
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+resizeCanvas();
+
+// ─── Coordinate helpers ────────────────────────────────
+function stringY(s) { return FRET_TOP + PADDING + s * CELL_H + CELL_H / 2; }
+function fretX(f) { return STRING_LABEL_W + PADDING + NUT_W + (f - state.startFret) * CELL_W + CELL_W / 2; }
+
+function posFromXY(x, y) {
+  const s = Math.round((y - FRET_TOP - PADDING - CELL_H / 2) / CELL_H);
+  const f = Math.round((x - STRING_LABEL_W - PADDING - NUT_W - CELL_W / 2) / CELL_W) + state.startFret;
+  if (s < 0 || s >= state.strings) return null;
+  if (f < state.startFret || f >= state.startFret + state.visibleFrets) return null;
+  return { string: s, fret: f };
+}
+
+function noteAt(stringIdx, fret) {
+  const openSemitone = noteToSemitone(state.tuning[stringIdx]);
+  return semitoneToNote(openSemitone + fret);
+}
+
+// ─── Marker logic ──────────────────────────────────────
+function findMarker(stringIdx, fret) {
+  return state.markers.find(m => m.string === stringIdx && m.fret === fret);
+}
+
+function toggleMarker(stringIdx, fret) {
+  const existing = findMarker(stringIdx, fret);
+  if (existing) {
+    state.markers = state.markers.filter(m => m !== existing);
+  } else {
+    state.markers.push({
+      string: stringIdx,
+      fret,
+      type: state.activeType,
+      label: state.labelText || '',
+    });
+  }
+  draw();
+}
+
+function clearMarkers() {
+  state.markers = [];
+  draw();
+}
+
+// ─── Draw ──────────────────────────────────────────────
+function draw() {
+  resizeCanvas();
+  const W = canvasWidth();
+  const H = canvasHeight();
+
+  // Background
+  ctx.fillStyle = '#2d1b0e';
+  ctx.fillRect(0, 0, W, H);
+
+  // Fretboard area
+  const fx = STRING_LABEL_W + PADDING + NUT_W;
+  const fy = FRET_TOP + PADDING;
+  const fw = state.visibleFrets * CELL_W;
+  const fh = state.strings * CELL_H;
+
+  // Fret slots (vertical lines)
+  const nutX = STRING_LABEL_W + PADDING;
+  ctx.fillStyle = '#f5f0e0';
+  ctx.fillRect(nutX, fy, NUT_W, fh);
+
+  // Frets
+  for (let i = 0; i <= state.visibleFrets; i++) {
+    const x = fx + i * CELL_W;
+    ctx.strokeStyle = i === 0 ? '#ccc' : '#888';
+    ctx.lineWidth = i === 0 ? 3 : 1.5;
+    ctx.beginPath();
+    ctx.moveTo(x, fy);
+    ctx.lineTo(x, fy + fh);
+    ctx.stroke();
+  }
+
+  // Fret numbers
+  ctx.fillStyle = '#999';
+  ctx.font = '12px system-ui';
+  ctx.textAlign = 'center';
+  for (let i = 0; i < state.visibleFrets; i++) {
+    const x = fx + i * CELL_W + CELL_W / 2;
+    ctx.fillText(state.startFret + i, x, fy - 10);
+  }
+
+  // Strings
+  for (let s = 0; s < state.strings; s++) {
+    const y = stringY(s);
+    const thickness = 1 + s * 0.4;
+    ctx.strokeStyle = '#c9a96e';
+    ctx.lineWidth = thickness;
+    ctx.beginPath();
+    ctx.moveTo(fx, y);
+    ctx.lineTo(fx + fw, y);
+    ctx.stroke();
+  }
+
+  // String labels (note names)
+  ctx.fillStyle = '#ccc';
+  ctx.font = 'bold 13px system-ui';
+  ctx.textAlign = 'right';
+  for (let s = 0; s < state.strings; s++) {
+    const y = stringY(s);
+    const openNote = state.tuning[s].replace(/\d/, '');
+    ctx.fillText(openNote, fx - 10, y + 4);
+  }
+
+  // Position dots
+  const dotFrets = [3,5,7,9,15,17,19,21];
+  for (const df of dotFrets) {
+    if (df >= state.startFret && df < state.startFret + state.visibleFrets) {
+      const x = fx + (df - state.startFret) * CELL_W + CELL_W / 2;
+      if (df === 12) {
+        ctx.fillStyle = '#555';
+        ctx.beginPath();
+        ctx.arc(x, stringY(1) + 10, 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(x, stringY(4) - 10, 4, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        const yMid = fy + fh / 2;
+        ctx.fillStyle = '#555';
+        ctx.beginPath();
+        ctx.arc(x, yMid, 4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  }
+
+  // Markers
+  for (const m of state.markers) {
+    if (m.fret < state.startFret || m.fret >= state.startFret + state.visibleFrets) continue;
+    const x = fretX(m.fret);
+    const y = stringY(m.string);
+    drawMarker(x, y, m);
+  }
+
+  // Hover indicator
+  if (state.hovered) {
+    if (state.hovered.fret >= state.startFret && state.hovered.fret < state.startFret + state.visibleFrets) {
+      const x = fretX(state.hovered.fret);
+      const y = stringY(state.hovered.string);
+      ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(x, y, 14, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  }
+
+  // Nut markers (fret 0 entries displayed on the nut bar)
+  const nutMarkers = state.markers.filter(m => m.fret === 0);
+  const nutY = FRET_TOP + PADDING;
+  for (const m of nutMarkers) {
+    const y = stringY(m.string);
+    drawNutMarker(nutX + NUT_W / 2, y, m);
+  }
+
+  // Start fret label on nut if > 1
+  if (state.startFret > 1) {
+    ctx.fillStyle = '#999';
+    ctx.font = 'bold 11px system-ui';
+    ctx.textAlign = 'center';
+    ctx.fillText(state.startFret + 'fr', nutX + NUT_W / 2, fy + fh + 16);
+  }
+}
+
+function drawMarker(x, y, marker) {
+  const r = 13;
+  if (marker.type === 'x') {
+    // Muted string - X
+    ctx.strokeStyle = '#111';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(x - r, y - r);
+    ctx.lineTo(x + r, y + r);
+    ctx.moveTo(x + r, y - r);
+    ctx.lineTo(x - r, y + r);
+    ctx.stroke();
+    return;
+  }
+
+  if (marker.type === 'open') {
+    // Open circle (open string)
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.stroke();
+    return;
+  }
+
+  // Filled marker
+  ctx.fillStyle = '#e94560';
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Label
+  if (marker.label) {
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 11px system-ui';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(marker.label, x, y);
+  }
+}
+
+function drawNutMarker(x, y, marker) {
+  const r = 10;
+  if (marker.type === 'x') {
+    ctx.strokeStyle = '#444';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x - r, y - r);
+    ctx.lineTo(x + r, y + r);
+    ctx.moveTo(x + r, y - r);
+    ctx.lineTo(x - r, y + r);
+    ctx.stroke();
+    return;
+  }
+  if (marker.type === 'open') {
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.stroke();
+    return;
+  }
+  ctx.fillStyle = '#e94560';
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+}
+
+// ─── Mouse interaction ─────────────────────────────────
+canvas.addEventListener('click', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / (window.devicePixelRatio || 1) / rect.width;
+  const scaleY = canvas.height / (window.devicePixelRatio || 1) / rect.height;
+  const x = (e.clientX - rect.left) * scaleX;
+  const y = (e.clientY - rect.top) * scaleY;
+  const pos = posFromXY(x, y);
+  if (pos) {
+    toggleMarker(pos.string, pos.fret);
+  }
+});
+
+canvas.addEventListener('mousemove', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / (window.devicePixelRatio || 1) / rect.width;
+  const scaleY = canvas.height / (window.devicePixelRatio || 1) / rect.height;
+  const x = (e.clientX - rect.left) * scaleX;
+  const y = (e.clientY - rect.top) * scaleY;
+  const pos = posFromXY(x, y);
+  if (!pos || pos.fret >= state.startFret + state.visibleFrets) {
+    if (state.hovered) { state.hovered = null; draw(); }
+    canvas.style.cursor = 'default';
+    return;
+  }
+  if (!state.hovered || state.hovered.string !== pos.string || state.hovered.fret !== pos.fret) {
+    state.hovered = pos;
+    draw();
+    const note = noteAt(pos.string, pos.fret);
+    canvas.title = `String ${pos.string + 1} · Fret ${pos.fret} · ${note}`;
+  }
+  canvas.style.cursor = 'pointer';
+});
+
+canvas.addEventListener('mouseleave', () => {
+  state.hovered = null;
+  draw();
+});
+
+// ─── Controls ───────────────────────────────────────────
+document.getElementById('clear-btn').addEventListener('click', clearMarkers);
+
+document.getElementById('start-fret').addEventListener('change', (e) => {
+  state.startFret = Math.max(0, Math.min(20, parseInt(e.target.value) || 1));
+  draw();
+});
+
+document.getElementById('label-input').addEventListener('input', (e) => {
+  state.labelText = e.target.value.slice(0, 6);
+});
+
+// Marker type buttons
+document.querySelectorAll('#marker-types .btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#marker-types .btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.activeType = btn.dataset.type;
+  });
+});
+
+// ─── Keyboard shortcuts ────────────────────────────────
+document.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+  if (e.key === 'Escape') { clearMarkers(); return; }
+  if (e.key === 'f' || e.key === 'F') {
+    state.activeType = 'filled';
+    document.querySelectorAll('#marker-types .btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.type === 'filled');
+    });
+    return;
+  }
+  if (e.key === 'o' || e.key === 'O') {
+    state.activeType = 'open';
+    document.querySelectorAll('#marker-types .btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.type === 'open');
+    });
+    return;
+  }
+  if (e.key === 'x' || e.key === 'X') {
+    state.activeType = 'x';
+    document.querySelectorAll('#marker-types .btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.type === 'x');
+    });
+    return;
+  }
+  if (e.key === 's' || e.key === 'S') { e.preventDefault(); exportSVG(); return; }
+  if (e.key === 'p' || e.key === 'P') { e.preventDefault(); exportPNG(); return; }
+  // Number keys 0-9 for start fret
+  if (/^[0-9]$/.test(e.key)) {
+    const num = parseInt(e.key);
+    state.startFret = num;
+    document.getElementById('start-fret').value = num;
+    draw();
+  }
+});
+
+// ─── Export ─────────────────────────────────────────────
+document.getElementById('export-png').addEventListener('click', exportPNG);
+document.getElementById('export-svg').addEventListener('click', exportSVG);
+
+function exportPNG() {
+  const link = document.createElement('a');
+  link.download = 'fretboard-diagram.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+
+function exportSVG() {
+  const W = canvasWidth();
+  const H = canvasHeight();
+  const fx = STRING_LABEL_W + PADDING + NUT_W;
+  const fy = FRET_TOP + PADDING;
+  const fw = state.visibleFrets * CELL_W;
+  const fh = state.strings * CELL_H;
+  const nutX = STRING_LABEL_W + PADDING;
+
+  let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">`;
+  svg += `<rect width="${W}" height="${H}" fill="#2d1b0e"/>`;
+
+  // Nut bar
+  svg += `<rect x="${nutX}" y="${fy}" width="${NUT_W}" height="${fh}" fill="#f5f0e0"/>`;
+
+  // Frets
+  for (let i = 0; i <= state.visibleFrets; i++) {
+    const x = fx + i * CELL_W;
+    svg += `<line x1="${x}" y1="${fy}" x2="${x}" y2="${fy + fh}" stroke="${i === 0 ? '#ccc' : '#888'}" stroke-width="${i === 0 ? 3 : 1.5}"/>`;
+  }
+
+  // Fret numbers
+  for (let i = 0; i < state.visibleFrets; i++) {
+    const x = fx + i * CELL_W + CELL_W / 2;
+    svg += `<text x="${x}" y="${fy - 10}" fill="#999" font-size="12" font-family="system-ui" text-anchor="middle">${state.startFret + i}</text>`;
+  }
+
+  // Strings
+  for (let s = 0; s < state.strings; s++) {
+    const y = stringY(s);
+    const thickness = 1 + s * 0.4;
+    svg += `<line x1="${fx}" y1="${y}" x2="${fx + fw}" y2="${y}" stroke="#c9a96e" stroke-width="${thickness}"/>`;
+  }
+
+  // String labels
+  for (let s = 0; s < state.strings; s++) {
+    const y = stringY(s);
+    svg += `<text x="${fx - 10}" y="${y + 4}" fill="#ccc" font-size="13" font-family="system-ui" font-weight="bold" text-anchor="end">${state.tuning[s].replace(/\d/, '')}</text>`;
+  }
+
+  // Markers
+  for (const m of state.markers) {
+    if (m.fret === 0) {
+      const y = stringY(m.string);
+      const x = nutX + NUT_W / 2;
+      const r = 10;
+      if (m.type === 'x') {
+        svg += `<line x1="${x - r}" y1="${y - r}" x2="${x + r}" y2="${y + r}" stroke="#444" stroke-width="2"/>`;
+        svg += `<line x1="${x + r}" y1="${y - r}" x2="${x - r}" y2="${y + r}" stroke="#444" stroke-width="2"/>`;
+      } else if (m.type === 'open') {
+        svg += `<circle cx="${x}" cy="${y}" r="${r}" fill="none" stroke="#fff" stroke-width="1.5"/>`;
+      } else {
+        svg += `<circle cx="${x}" cy="${y}" r="${r}" fill="#e94560" stroke="#fff" stroke-width="1"/>`;
+      }
+      continue;
+    }
+    if (m.fret < state.startFret || m.fret >= state.startFret + state.visibleFrets) continue;
+    const x = fretX(m.fret);
+    const y = stringY(m.string);
+    const r = 13;
+    if (m.type === 'x') {
+      svg += `<line x1="${x - r}" y1="${y - r}" x2="${x + r}" y2="${y + r}" stroke="#111" stroke-width="2.5"/>`;
+      svg += `<line x1="${x + r}" y1="${y - r}" x2="${x - r}" y2="${y + r}" stroke="#111" stroke-width="2.5"/>`;
+    } else if (m.type === 'open') {
+      svg += `<circle cx="${x}" cy="${y}" r="${r}" fill="none" stroke="#fff" stroke-width="2"/>`;
+    } else {
+      svg += `<circle cx="${x}" cy="${y}" r="${r}" fill="#e94560" stroke="#fff" stroke-width="2"/>`;
+      if (m.label) {
+        svg += `<text x="${x}" y="${y}" fill="#fff" font-size="11" font-family="system-ui" font-weight="bold" text-anchor="middle" dominant-baseline="central">${escHtml(m.label)}</text>`;
+      }
+    }
+  }
+
+  svg += '</svg>';
+
+  const blob = new Blob([svg], { type: 'image/svg+xml' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.download = 'fretboard-diagram.svg';
+  link.href = url;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+function escHtml(str) {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// ─── Startup ────────────────────────────────────────────
+draw();
+</script>
+</body>
+</html>
