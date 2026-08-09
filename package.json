@@ -1,0 +1,14 @@
+{
+  "name": "editor-de-braco",
+  "version": "0.0.0",
+  "private": true,
+  "description": "SPA local para criar, editar e exportar diagramas de braço de guitarra.",
+  "scripts": {
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "test:report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.0"
+  }
+}
