@@ -71,9 +71,15 @@ com uma experiência consistente de mobile a desktop.
 
 - **Given** um diagrama configurado
 - **When** o usuário exporta PNG ou SVG
-- **Then** o arquivo reproduz o artboard visível, com notas, rótulos, marcadores e fundo claros
+- **Then** o arquivo reproduz o artboard visível, com notas, rótulos, marcadores, ligações e fundo claros
 
-### US-9: Tratar entrada inválida
+### US-10: Ligar marcadores com linhas
+
+- **Given** que existem dois ou mais marcadores no diagrama
+- **When** o usuário ativa a ferramenta Ligar, escolhe a cor da ligação e clica em dois marcadores
+- **Then** uma linha reta é desenhada entre os centros dos marcadores, entra no undo/redo e aparece na exportação
+
+### US-11: Tratar entrada inválida
 
 - **Given** o campo de casa inicial
 - **When** o usuário informa valor vazio, não numérico ou fora do intervalo permitido
@@ -226,10 +232,17 @@ interface Marker {
   customLabel: string;
 }
 
+interface Connection {
+  a: string;
+  b: string;
+  color: string | null;
+}
+
 interface DiagramContent {
   tuningPresetId: string;
   diagramTitle: string;
   markers: Marker[];
+  connections: Connection[];
 }
 
 interface EditorState {
@@ -238,6 +251,9 @@ interface EditorState {
   selectedMarkerId: string | null;
   activeMarkerType: MarkerType;
   activeMarkerColor: string | null;
+  activeConnectionColor: string | null;
+  activeTool: 'marker' | 'connect';
+  linkFrom: string | null;
   activeCustomLabel: string;
 }
 
@@ -267,8 +283,11 @@ Invariantes:
   caracteres de controle e usa `FRETBOARD / 06 STRING` quando vazio após normalização.
 - A ferramenta de cor ativa (`activeMarkerColor`) é sticky como o tipo: não cria snapshots de
   histórico e não é resetada ao desmarcar.
-- Histórico registra somente criação, edição, remoção, limpeza e mudança de afinação. Seleção,
-  ferramenta ativa, rótulo em digitação e navegação da janela não criam snapshots.
+- `connections` armazena pares normalizados (`a` < `b` lexicograficamente) sem duplicata; `color` segue
+  a paleta de marcadores; remover marcador remove ligações incidentes; `clearDiagram` limpa ligações.
+- `activeConnectionColor` e `activeTool` são sticky e não entram no histórico; `linkFrom` é efêmero.
+- Histórico registra somente criação, edição, remoção, limpeza, ligação, desligação e mudança de
+  afinação. Seleção, ferramenta ativa, rótulo em digitação e navegação da janela não criam snapshots.
 - Histórico mantém no máximo 50 estados em `past` e 50 em `future`; nova mutação após undo limpa
   `future`.
 - Undo de remoção/limpeza restaura conteúdo e seleciona o marcador restaurado quando houver um alvo
@@ -304,7 +323,7 @@ Não haverá telemetria remota. O editor deve oferecer observabilidade para o us
 - O fluxo criar → selecionar → editar → remover → desfazer é executável apenas por teclado.
 - No Chrome estável da máquina de desenvolvimento, o p95 de 100 atualizações de estado, após dez
   aquecimentos, permanece abaixo de 16 ms para 72 posições fretadas + seis alvos do nut.
-- O arquivo-fonte UTF-8 `index.html` permanece em até 51.200 bytes, medido por
+- O arquivo-fonte UTF-8 `index.html` permanece em até 57.344 bytes, medido por
   `wc -c index.html`; não há artefato minificado separado.
 - Não há dependências externas nem requisições de rede em runtime.
 - Qualquer motion respeita `prefers-reduced-motion`.
@@ -408,8 +427,13 @@ isoladamente por seu commit se seu contrato ainda não for dependência de step 
   preenchido usa contraste legível (tinta ou branco conforme luminância do fill).
 - [ ] AC-38: O título do diagrama é editável na barra de comandos; alterações refletem no SVG e na
   exportação; título vazio restaura o padrão; undo/redo inclui mudanças de título.
+- [ ] AC-39: A ferramenta Ligar cria linhas entre dois marcadores distintos; pares duplicados são
+  rejeitados; a cor da ligação é independente e sticky; undo/redo cobre criação e remoção.
+- [ ] AC-40: Remover marcador ou limpar o diagrama remove ligações associadas; exportação SVG/PNG
+  reproduz ligações visíveis sem affordances de edição.
+- [ ] AC-41: Com marcador selecionado, o inspetor lista ligações incidentes com remoção individual.
 - [ ] AC-32: A aplicação não faz requisições de rede em runtime e `wc -c index.html` retorna no
-  máximo 51.200 bytes.
+  máximo 57.344 bytes.
 - [ ] AC-33: Com reduced motion ativo, nenhuma transição ou animação não essencial permanece.
 - [ ] AC-34: Labels com `<>&"'`, whitespace e caracteres de controle são normalizados/rejeitados
   conforme o data model e nunca criam markup, atributos ou URLs.

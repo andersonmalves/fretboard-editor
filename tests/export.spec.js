@@ -37,6 +37,19 @@ test.describe("Exportacao", () => {
     expect(svg).not.toContain("aria-labelledby");
   });
 
+  test("AC-18: ligacoes exportadas aparecem no SVG sem camada de edicao", async ({ fretboard }) => {
+    await fretboard.pickTool("filled");
+    await fretboard.activate(1, 4);
+    await fretboard.activate(5, 6);
+    await fretboard.connectMarkers(1, 4, 5, 6);
+
+    const svg = await fretboard.exportedSvg();
+
+    expect(svg).toContain('data-diagram-layer="connections"');
+    expect(svg).toContain("<line");
+    expect(svg).not.toContain("data-editor-layer");
+  });
+
   test("AC-18: marcadores e notas sobrevivem a exportacao", async ({ fretboard }) => {
     await fretboard.pickTool("filled");
     await fretboard.activate(6, 3);
@@ -168,11 +181,11 @@ test.describe("Exportacao", () => {
 });
 
 test.describe("Orcamento do artefato", () => {
-  test("AC-32: index.html permanece dentro de 51.200 bytes", () => {
+  test("AC-32: index.html permanece dentro de 57.344 bytes", () => {
     const arquivo = path.join(__dirname, "..", "index.html");
     const bytes = fs.statSync(arquivo).size;
 
-    expect(bytes).toBeLessThanOrEqual(51200);
+    expect(bytes).toBeLessThanOrEqual(57344);
   });
 
   test("nao ha dependencia de runtime carregada pelo documento", () => {

@@ -37,6 +37,8 @@ class FretboardPage {
     this.kicker = page.locator("#selection-kicker");
     this.colorGroup = page.locator("#color-group");
     this.diagramTitle = page.locator("#diagram-title");
+    this.connectionField = page.locator("#connection-field");
+    this.connectionList = page.locator("#connection-list");
     this.consoleErrors = [];
   }
 
@@ -62,6 +64,20 @@ class FretboardPage {
 
   toolButton(tipo) {
     return this.page.locator(`.type-button[data-type="${tipo}"]`);
+  }
+
+  workToolButton(tool) {
+    return this.page.locator(`.tool-button[data-tool="${tool}"]`);
+  }
+
+  async pickWorkTool(tool) {
+    await this.workToolButton(tool).click();
+  }
+
+  async connectMarkers(cordaA, casaA, cordaB, casaB) {
+    await this.pickWorkTool("connect");
+    await this.activate(cordaA, casaA);
+    await this.activate(cordaB, casaB);
   }
 
   colorSwatch(label) {
@@ -132,6 +148,14 @@ class FretboardPage {
 
   async markers() {
     return (await this.state()).content.markers;
+  }
+
+  async connections() {
+    return (await this.state()).content.connections ?? [];
+  }
+
+  connectionLines() {
+    return this.svg.locator('[data-diagram-layer="connections"] line');
   }
 
   async markerAt(corda, casa) {
