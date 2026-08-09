@@ -286,8 +286,10 @@ Invariantes:
 - `connections` armazena pares normalizados (`a` < `b` lexicograficamente) sem duplicata; `color` segue
   a paleta de marcadores; remover marcador remove ligações incidentes; `clearDiagram` limpa ligações.
 - `activeConnectionColor` e `activeTool` são sticky e não entram no histórico; `linkFrom` é efêmero.
-- Histórico registra somente criação, edição, remoção, limpeza, ligação, desligação e mudança de
-  afinação. Seleção, ferramenta ativa, rótulo em digitação e navegação da janela não criam snapshots.
+- Histórico registra somente criação, edição, remoção, limpeza, ligação, desligação, mudança de
+  afinação e — quando a feature [`transpose-shape`](transpose-shape.md) estiver entregue —
+  transposição de forma. Seleção, ferramenta ativa, rótulo em digitação e navegação da janela não
+  criam snapshots.
 - Histórico mantém no máximo 50 estados em `past` e 50 em `future`; nova mutação após undo limpa
   `future`.
 - Undo de remoção/limpeza restaura conteúdo e seleciona o marcador restaurado quando houver um alvo
@@ -323,8 +325,10 @@ Não haverá telemetria remota. O editor deve oferecer observabilidade para o us
 - O fluxo criar → selecionar → editar → remover → desfazer é executável apenas por teclado.
 - No Chrome estável da máquina de desenvolvimento, o p95 de 100 atualizações de estado, após dez
   aquecimentos, permanece abaixo de 16 ms para 72 posições fretadas + seis alvos do nut.
-- O arquivo-fonte UTF-8 `index.html` permanece em até 57.344 bytes, medido por
-  `wc -c index.html`; não há artefato minificado separado.
+- O arquivo-fonte UTF-8 `index.html` permanece em até **59.392** bytes, medido por
+  `wc -c index.html`; não há artefato minificado separado. O teto anterior (57.344) foi
+  substituído pelo [`ADR 002`](../adr/002-budget-bytes-transpor-forma.md) para caber a feature
+  incremental [`transpose-shape`](transpose-shape.md).
 - Não há dependências externas nem requisições de rede em runtime.
 - Qualquer motion respeita `prefers-reduced-motion`.
 
@@ -433,7 +437,7 @@ isoladamente por seu commit se seu contrato ainda não for dependência de step 
   reproduz ligações visíveis sem affordances de edição.
 - [ ] AC-41: Com marcador selecionado, o inspetor lista ligações incidentes com remoção individual.
 - [ ] AC-32: A aplicação não faz requisições de rede em runtime e `wc -c index.html` retorna no
-  máximo 57.344 bytes.
+  máximo 59.392 bytes ([ADR 002](../adr/002-budget-bytes-transpor-forma.md)).
 - [ ] AC-33: Com reduced motion ativo, nenhuma transição ou animação não essencial permanece.
 - [ ] AC-34: Labels com `<>&"'`, whitespace e caracteres de controle são normalizados/rejeitados
   conforme o data model e nunca criam markup, atributos ou URLs.
@@ -468,7 +472,9 @@ isoladamente por seu commit se seu contrato ainda não for dependência de step 
 
 ## 17. Open questions
 
-- Nenhuma questão aberta bloqueante. A spec e o ADR 001 foram aprovados pelo usuário.
+- Nenhuma questão aberta bloqueante na spec pai. Feature incremental em draft:
+  [`transpose-shape`](transpose-shape.md) + [`ADR 002`](../adr/002-budget-bytes-transpor-forma.md)
+  (orçamento); aguardam aprovação antes dos atomic steps.
 
 ## 18. Implementation plan
 

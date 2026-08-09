@@ -79,7 +79,7 @@ h1{margin:0;font-size:clamp(1.35rem,2.2vw,2rem);font-weight:680;letter-spacing:-
 .button.danger{color:var(--color-destructive)}
 .command-spacer{flex:1}
 .button-cluster{display:flex;gap:6px}
-.history-cluster,.clear-button,.export-cluster{margin-top:22px}
+.history-cluster,.transpose-cluster,.clear-button,.export-cluster{margin-top:22px}
 .position-control{display:grid;grid-template-columns:44px minmax(0,1fr) 44px;gap:6px}
 .error{margin:4px 0 0;color:var(--color-error);font-size:.76rem}.error:empty{display:none}
 .workspace{display:grid;grid-template-columns:minmax(0,1fr) 286px;gap:14px;align-items:start}
@@ -133,7 +133,7 @@ kbd{display:inline-block;min-width:25px;padding:2px 5px;border:1px solid var(--c
 }
 @media(max-width:767px){
   .app{padding:12px}.masthead{align-items:center;margin-bottom:14px}.edition{display:none}.brand-mark{width:38px;height:38px}.masthead p{font-size:.78rem}
-  .command-bar{display:grid;grid-template-columns:1fr auto;padding:10px}.field.tuning,.field.position,.field.title{width:auto;min-width:0}.field.title{grid-column:1/-1}.field.position{grid-column:1/-1}.position-control{grid-template-columns:44px 1fr 44px}.history-cluster{grid-column:2;grid-row:1}.export-cluster{grid-column:1/-1;margin-top:0}.export-cluster .button{flex:1}.clear-button{grid-column:1/-1;margin-top:0}
+  .command-bar{display:grid;grid-template-columns:1fr auto;padding:10px}.field.tuning,.field.position,.field.title{width:auto;min-width:0}.field.title{grid-column:1/-1}.field.position{grid-column:1/-1}.position-control{grid-template-columns:44px 1fr 44px}.history-cluster{grid-column:2;grid-row:1}.transpose-cluster{grid-column:1/-1;margin-top:0}.transpose-cluster .button{flex:1}.export-cluster{grid-column:1/-1;margin-top:0}.export-cluster .button{flex:1}.clear-button{grid-column:1/-1;margin-top:0}
   .workspace{gap:10px}.panel-header{padding:11px 12px}.artboard-pad{padding:7px}.board-canvas{aspect-ratio:12/11}.board-caption{display:block}.board-caption span{display:block;text-align:left!important}
   .inspector-body{display:grid;grid-template-columns:1fr;padding:14px}.inspector-actions,.shortcut-list{grid-column:auto}.grid-cell{min-width:44px;min-height:44px}.status{position:fixed;z-index:10;left:12px;right:12px;bottom:12px;margin:0;padding:11px 13px;border:1px solid var(--color-border);border-radius:var(--radius-sm);background:var(--color-panel-bg);box-shadow:0 8px 20px var(--color-shadow);opacity:0;pointer-events:none}.status.visible{opacity:1}
 }
@@ -177,6 +177,10 @@ kbd{display:inline-block;min-width:25px;padding:2px 5px;border:1px solid var(--c
     <div class="button-cluster history-cluster" aria-label="Histórico">
       <button class="button icon" id="undo-button" type="button" aria-label="Desfazer" title="Desfazer (Ctrl ou ⌘ + Z)" disabled>↶</button>
       <button class="button icon" id="redo-button" type="button" aria-label="Refazer" title="Refazer (Ctrl ou ⌘ + Shift + Z)" disabled>↷</button>
+    </div>
+    <div class="button-cluster transpose-cluster" aria-label="Transpor forma">
+      <button class="button" id="transpose-down" type="button" aria-label="Transpor forma uma casa em direção ao nut" disabled>−1 casa</button>
+      <button class="button" id="transpose-up" type="button" aria-label="Transpor forma uma casa em direção ao corpo" disabled>+1 casa</button>
     </div>
     <button class="button danger clear-button" id="clear-button" type="button" disabled>Limpar</button>
     <div class="button-cluster export-cluster">
@@ -274,6 +278,7 @@ const refs={
   svg:document.querySelector("#fretboard-svg"),grid:document.querySelector("#fretboard-grid"),
   tuning:document.querySelector("#tuning-select"),start:document.querySelector("#start-fret"),startError:document.querySelector("#start-fret-error"),
   previous:document.querySelector("#previous-fret"),next:document.querySelector("#next-fret"),undo:document.querySelector("#undo-button"),redo:document.querySelector("#redo-button"),
+  transposeDown:document.querySelector("#transpose-down"),transposeUp:document.querySelector("#transpose-up"),
   clear:document.querySelector("#clear-button"),remove:document.querySelector("#remove-button"),deselect:document.querySelector("#deselect-button"),
   exportSvg:document.querySelector("#export-svg"),exportPng:document.querySelector("#export-png"),label:document.querySelector("#label-input"),
   readout:document.querySelector("#window-readout"),coordinate:document.querySelector("#selection-coordinate"),badge:document.querySelector("#note-badge"),
@@ -315,6 +320,13 @@ function exportWarning(){const count=hiddenMarkers().length;return count?` ${off
 function normalizeLabel(value){return Array.from(value.replace(/[\u0000-\u001f\u007f]/g,"").replace(/\s+/g," ").trim()).slice(0,6).join("")}
 function normalizeDiagramTitle(value){const clean=Array.from(value.replace(/[\u0000-\u001f\u007f]/g,"").replace(/\s+/g," ").trim()).slice(0,40).join("");return clean||DEFAULT_DIAGRAM_TITLE}
 function normalizeType(type,fret){return fret===0&&type==="filled"?"outline":type}
+function normalizeTypeAfterTranspose(type,fret){return type==="muted"&&fret>0?"filled":normalizeType(type,fret)}
+function transposeShape(delta){
+  const markers=history.present.markers;if(!markers.length)return;
+  if(markers.some(marker=>{const next=marker.fret+delta;return next<0||next>MAX_FRET})){announce(delta>0?"Não é possível avançar: algum marcador sairia da casa 24.":"Não é possível recuar: algum marcador sairia do nut.",true);return}
+  const selectedId=editor.selectedMarkerId;editor.linkFrom=null;
+  commitContent(content=>{content.markers.forEach(marker=>{marker.fret+=delta;marker.type=normalizeTypeAfterTranspose(marker.type,marker.fret)})},delta>0?"Forma transposta uma casa para cima.":"Forma transposta uma casa para baixo.",selectedId)
+}
 function parsePitch(value){const match=/^([A-G])([#b]?)(-?\d)$/.exec(value);if(!match)throw new Error("Nota de afinação inválida");const base={C:0,D:2,E:4,F:5,G:7,A:9,B:11}[match[1]];const accidental=match[2]==="#"?1:match[2]==="b"?-1:0;return (Number(match[3])+1)*12+base+accidental}
 function noteAt(stringIndex,fret){const tuning=currentTuning();const pitch=parsePitch(tuning.notes[stringIndex])+fret;const notes=tuning.accidentalStyle==="flat"?FLAT_NOTES:SHARP_NOTES;return {pitchClass:notes[((pitch%12)+12)%12],octave:Math.floor(pitch/12)-1}}
 function spokenNote(note){const base=NOTE_NAMES[note.pitchClass[0]];const accidental=note.pitchClass.includes("#")?" sustenido":note.pitchClass.includes("b")?" bemol":"";return `${base}${accidental} ${note.octave}`}
@@ -358,6 +370,7 @@ function editSelected(patch,message){const marker=selectedMarker();if(!marker){a
 function removeSelected(){const marker=selectedMarker();if(!marker){announce("Nenhum marcador selecionado.",true);return}const id=marker.id;commitContent(content=>{content.markers=content.markers.filter(item=>item.id!==id);content.connections=content.connections.filter(link=>link.a!==id&&link.b!==id)},"Marcador removido. Use Desfazer para restaurar.",null);if(editor.linkFrom===id)editor.linkFrom=null}
 function deselect(){if(!editor.selectedMarkerId&&!editor.linkFrom)return;editor.selectedMarkerId=null;editor.linkFrom=null;editor.activeCustomLabel="";labelDraftFor=null;render();announce("Seleção cancelada.")}
 function clearDiagram(){if(!history.present.markers.length&&!history.present.connections.length)return;commitContent(content=>{content.markers=[];content.connections=[]},"Diagrama limpo. Use Desfazer para restaurar.",null);editor.linkFrom=null}
+
 
 function setStartFret(value,source="control"){
   const raw=String(value).trim();const parsed=Number(raw);if(raw===""||!Number.isInteger(parsed)||parsed<0||parsed>MAX_FRET){refs.start.value=String(editor.startFret);refs.startError.textContent="Informe uma casa inteira entre 0 e 24.";refs.start.setAttribute("aria-invalid","true");announce("Casa inicial inválida. O último valor válido foi mantido.",true);return false}
@@ -428,7 +441,7 @@ function mirrorLabel(value){if(refs.label.value!==value)refs.label.value=value}
 function mirrorDiagramTitle(value){if(refs.diagramTitle.value!==value)refs.diagramTitle.value=value}
 function renderConnectionList(marker){if(!marker||!connectionsForMarker(marker.id).length){refs.connectionField.hidden=true;refs.connectionList.replaceChildren();return}refs.connectionField.hidden=false;const fragment=document.createDocumentFragment();connectionsForMarker(marker.id).forEach(link=>{const item=document.createElement("li");item.className="connection-item";const label=document.createElement("span");label.textContent=linkLabel(link,marker.id);const button=document.createElement("button");button.type="button";button.className="button danger connection-remove";button.textContent="Remover";button.addEventListener("click",()=>removeConnection(link.a,link.b));item.append(label,button);fragment.append(item)});refs.connectionList.replaceChildren(fragment)}
 function renderInspector(){
-  const marker=selectedMarker();const hasContent=history.present.markers.length||history.present.connections.length;refs.remove.disabled=!marker;refs.deselect.disabled=!marker&&!editor.linkFrom;refs.clear.disabled=!hasContent;refs.undo.disabled=!history.past.length;refs.redo.disabled=!history.future.length;refs.previous.disabled=editor.startFret===0;refs.next.disabled=editor.startFret>=maxStartFret();
+  const marker=selectedMarker();const hasMarkers=history.present.markers.length;const hasContent=hasMarkers||history.present.connections.length;refs.remove.disabled=!marker;refs.deselect.disabled=!marker&&!editor.linkFrom;refs.clear.disabled=!hasContent;refs.undo.disabled=!history.past.length;refs.redo.disabled=!history.future.length;refs.transposeDown.disabled=!hasMarkers;refs.transposeUp.disabled=!hasMarkers;refs.previous.disabled=editor.startFret===0;refs.next.disabled=editor.startFret>=maxStartFret();
   if(marker){const note=noteAt(marker.stringIndex,marker.fret);const shown=displayLabel(marker);editor.activeCustomLabel=marker.customLabel;if(editor.activeTool==="marker"){setActiveType(marker.type);setActiveMarkerColor(marker.color??null)}refs.badge.textContent=shown;refs.badge.dataset.long=String(shown.length>3);refs.kicker.textContent=marker.customLabel?`Rótulo ${marker.customLabel} · nota ${spokenNote(note)}`:`Nota ${spokenNote(note)}`;refs.selectionName.textContent=`Corda ${marker.stringIndex+1} · ${marker.fret===0?"nut":`casa ${marker.fret}`}`;refs.coordinate.textContent=`S${marker.stringIndex+1} / F${String(marker.fret).padStart(2,"0")}`;mirrorLabel(marker.customLabel)}else{refs.badge.textContent="—";refs.badge.dataset.long="false";refs.kicker.textContent=editor.activeTool==="connect"?"Modo ligar":"Nenhum marcador";refs.selectionName.textContent=editor.linkFrom?"Escolha o destino":"Escolha uma posição";refs.coordinate.textContent="—";mirrorLabel(editor.activeCustomLabel)}
   if(editor.activeTool==="connect")syncColorSwatches(editor.activeConnectionColor);
   renderConnectionList(marker);
@@ -439,7 +452,7 @@ function render(){const restoreGridFocus=document.activeElement?.classList.conta
 
 refs.tuning.addEventListener("change",event=>{const id=event.target.value;if(!TUNINGS[id]){announce("Afinação inválida. Nenhuma alteração foi aplicada.",true);refs.tuning.value=history.present.tuningPresetId;return}commitContent(content=>{content.tuningPresetId=id},`Afinação alterada para ${TUNINGS[id].name}.`,editor.selectedMarkerId)});
 refs.start.addEventListener("input",event=>setStartFret(event.target.value));refs.previous.addEventListener("click",()=>setStartFret(editor.startFret-1));refs.next.addEventListener("click",()=>setStartFret(editor.startFret+1));
-refs.undo.addEventListener("click",undo);refs.redo.addEventListener("click",redo);refs.clear.addEventListener("click",clearDiagram);refs.remove.addEventListener("click",removeSelected);refs.deselect.addEventListener("click",deselect);
+refs.undo.addEventListener("click",undo);refs.redo.addEventListener("click",redo);refs.transposeDown.addEventListener("click",()=>transposeShape(-1));refs.transposeUp.addEventListener("click",()=>transposeShape(1));refs.clear.addEventListener("click",clearDiagram);refs.remove.addEventListener("click",removeSelected);refs.deselect.addEventListener("click",deselect);
 document.querySelectorAll(".tool-button").forEach(button=>button.addEventListener("click",()=>setActiveTool(button.dataset.tool)));
 document.querySelectorAll(".type-button").forEach(button=>button.addEventListener("click",()=>{const requested=button.dataset.type;const marker=selectedMarker();setActiveType(requested);if(!marker){announce(`Ferramenta ${TYPE_NAMES[requested]} ativa.`);return}if(requested==="muted"&&marker.fret!==0){announce(`${MUTED_ONLY_AT_NUT} Ferramenta abafado ativa para o próximo marcador.`,true);return}const type=normalizeType(requested,marker.fret);if(type!==requested){announce(FILLED_NORMALIZED_AT_NUT);if(marker.type===type){setActiveType(type);return}}editSelected({type},`Marcador alterado para ${TYPE_NAMES[type]}.`)}));
 refs.label.addEventListener("input",event=>{const clean=normalizeLabel(event.target.value);editor.activeCustomLabel=clean;if(event.target.value!==clean)event.target.value=clean;const marker=selectedMarker();if(!marker||marker.customLabel===clean)return;const message=clean?`Rótulo alterado para ${clean}.`:"Rótulo automático restaurado.";if(labelDraftFor===marker.id){history.present.markers.find(item=>item.id===marker.id).customLabel=clean;render();announce(message);return}editSelected({customLabel:clean},message);labelDraftFor=marker.id});

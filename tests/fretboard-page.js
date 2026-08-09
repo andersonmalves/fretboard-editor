@@ -22,6 +22,8 @@ class FretboardPage {
     this.nextFret = page.locator("#next-fret");
     this.undo = page.locator("#undo-button");
     this.redo = page.locator("#redo-button");
+    this.transposeDown = page.locator("#transpose-down");
+    this.transposeUp = page.locator("#transpose-up");
     this.clear = page.locator("#clear-button");
     this.remove = page.locator("#remove-button");
     this.deselect = page.locator("#deselect-button");

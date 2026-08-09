@@ -108,7 +108,7 @@ Mais detalhes estão na
 
 Na versão atual:
 
-- `index.html` possui no máximo 57.344 bytes.
+- `index.html` possui no máximo 59.392 bytes ([ADR 002](adr/002-budget-bytes-transpor-forma.md)).
 - O renderer mediu p95 inferior a 1 ms em 100 atualizações, após 10 aquecimentos, no ambiente de
   desenvolvimento.
 - Foco sobre a prancha tem contraste de 5,12:1.

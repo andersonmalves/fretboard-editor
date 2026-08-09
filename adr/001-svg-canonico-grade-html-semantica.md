@@ -4,6 +4,10 @@
 **Date:** 2026-08-09
 **Spec:** [`specs/fretboard-editor.md`](../specs/fretboard-editor.md)
 
+> **Nota:** o teto numérico de bytes deste ADR (57.344) foi **substituído** pelo
+> [`ADR 002`](002-budget-bytes-transpor-forma.md) (59.392). A decisão de renderer
+> (SVG canônico + grade HTML semântica) permanece.
+
 ## Context
 
 O protótipo atual desenha o editor em Canvas e mantém um segundo renderer manual para exportar
