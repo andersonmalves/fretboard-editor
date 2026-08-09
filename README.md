@@ -40,8 +40,18 @@ usado nas validações e evita diferenças de segurança entre navegadores para 
 5. Selecione um marcador existente para alterar tipo ou rótulo.
 6. Use **Baixar SVG** ou **Baixar PNG** para exportar a prancha visível.
 
-Marcadores abafados são permitidos somente no nut, casa 0. Um marcador criado no nut com a
-ferramenta preenchida é normalizado para vazado, representação usada para corda solta.
+Marcadores abafados são permitidos somente no nut, casa 0. Um marcador criado ou editado no nut com
+a ferramenta preenchida é normalizado para vazado, representação usada para corda solta.
+
+A janela mantém sua largura até o fim do braço: informar uma casa inicial alta demais recua o início
+o suficiente para preservar as casas visíveis, com aviso, em vez de encolher o diagrama. Com doze
+casas, a casa inicial vai até 13; com seis, até 19.
+
+O nut faz parte do diagrama apenas quando a casa inicial é 0. A partir da casa 1 o editor produz um
+diagrama de posição: a borda esquerda passa a ser um traste comum, a prancha declara a posição no
+cabeçalho e os alvos de corda solta saem da grade. Marcadores que ficam fora da janela permanecem no
+estado, mas são contados na legenda da prancha e no aviso de exportação, porque não entram no
+arquivo gerado.
 
 ## Atalhos de teclado
 
@@ -103,11 +113,40 @@ Na versão atual:
   desenvolvimento.
 - Foco sobre a prancha tem contraste de 5,12:1.
 - Trastes e regras sobre a prancha têm contraste de 3,32:1.
-- Os fluxos de criação, edição, remoção, histórico, afinação e exportação foram verificados em
-  navegador Chromium.
+- Os fluxos de criação, edição, remoção, histórico, afinação, teclado, responsividade e exportação
+  são cobertos por testes automatizados em Chromium, Firefox e WebKit.
 
-A matriz manual completa em Firefox, Safari e VoiceOver permanece uma validação recomendada antes
-de publicação pública.
+A validação com VoiceOver permanece manual e recomendada antes de publicação pública.
+
+## Testes
+
+A suíte é end-to-end com Playwright e dirige a interface real — cliques, teclado e campos. O estado
+interno é lido apenas nas asserções. As dependências são de desenvolvimento; o produto continua sem
+dependência de runtime.
+
+```bash
+npm install
+npx playwright install    # apenas na primeira execução
+npm test                  # Chromium, Firefox e WebKit
+npm test -- --project=chromium
+npm run test:ui           # modo interativo
+```
+
+| Arquivo | Cobre |
+|---|---|
+| `tests/musical-model.spec.js` | AC-2, AC-3, AC-8, AC-24, AC-29 |
+| `tests/markers.spec.js` | AC-4, AC-5, AC-6, AC-15, AC-16, AC-27 |
+| `tests/history.spec.js` | AC-7, AC-22, AC-30 |
+| `tests/window.spec.js` | AC-1, AC-9, AC-10, AC-25, AC-28 |
+| `tests/position.spec.js` | Nut por posição e aviso de marcadores fora da janela |
+| `tests/label.spec.js` | AC-19, AC-34, rótulo no nome acessível |
+| `tests/marker-label-fit.spec.js` | Ajuste do rótulo ao disco do marcador |
+| `tests/keyboard.spec.js` | AC-6, AC-13, AC-21 |
+| `tests/export.spec.js` | AC-18, AC-26, AC-32 |
+| `tests/responsive.spec.js` | AC-11, AC-12, AC-23, AC-33 |
+
+Permanecem fora do alcance automatizado: AC-17 (contraste medido), AC-14 (avaliação visual do foco)
+e a parte de AC-36 referente a VoiceOver.
 
 ## Verificações locais
 
@@ -122,27 +161,22 @@ git diff --check
 python3 -m http.server 4176 --bind 127.0.0.1
 ```
 
-Checklist manual mínimo:
-
-1. Criar um marcador e confirmar a nota automática.
-2. Editar tipo e rótulo, remover e desfazer.
-3. Alterar a afinação e confirmar que as posições são preservadas.
-4. Navegar pela grade somente com teclado.
-5. Validar as casas inicial 0 e 24 e um valor inválido.
-6. Exportar SVG e PNG e comparar com a prancha visível.
-7. Conferir os layouts em 390, 768 e 1440 px.
-
 ## Estrutura do repositório
 
 ```text
 .
 ├── index.html                         # SPA autocontida
 ├── README.md                          # Visão geral e instruções
+├── package.json                       # Somente dependências de desenvolvimento
+├── playwright.config.js               # Matriz Chromium, Firefox e WebKit
 ├── adr/
 │   └── 001-svg-canonico-grade-html-semantica.md
-└── specs/
-    ├── fretboard-editor.md            # Especificação aprovada
-    └── steps/                         # Handoffs de implementação
+├── specs/
+│   ├── fretboard-editor.md            # Especificação aprovada
+│   └── steps/                         # Handoffs de implementação
+└── tests/                             # Suíte end-to-end
+    ├── fixtures.js
+    └── fretboard-page.js              # Page Object
 ```
 
 ## Escopo atual
