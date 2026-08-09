@@ -33,6 +33,14 @@
   --color-shadow:rgb(0 0 0 / .28);
   --color-hit-hover:rgb(110 200 255 / .14);
   --color-transparent:transparent;
+  --color-marker-default:var(--color-selection);
+  --color-marker-blue:#3b7dd8;
+  --color-marker-green:#4a8d3f;
+  --color-marker-orange:#b45309;
+  --color-marker-purple:#7e4dab;
+  --color-marker-teal:#0d9488;
+  --color-marker-pink:#e91e63;
+  --color-marker-gray:#6b7280;
   --radius-sm:6px;
   --radius-md:12px;
   --radius-lg:18px;
@@ -102,6 +110,11 @@ h1{margin:0;font-size:clamp(1.35rem,2.2vw,2rem);font-weight:680;letter-spacing:-
 .type-button{min-height:54px;border:1px solid var(--color-border);border-radius:var(--radius-sm);background:var(--color-panel-raised);color:var(--color-text-muted);cursor:pointer;font-size:.74rem;font-weight:700}
 .type-button span{display:block;margin-bottom:2px;font-size:1.1rem}
 .type-button[aria-pressed="true"]{border-color:var(--color-selection);background:var(--color-selection);color:var(--color-white)}
+.color-group{display:flex;gap:6px;flex-wrap:wrap;margin-top:3px}
+.color-swatch{width:28px;height:28px;border-radius:50%;border:2px solid var(--color-border);cursor:pointer;padding:0;position:relative}
+.color-swatch:hover{border-color:var(--color-text-muted)}
+.color-swatch:focus-visible{outline:3px solid var(--color-focus);outline-offset:2px}
+.color-swatch[aria-checked="true"]{border-color:var(--color-focus);box-shadow:0 0 0 2px var(--color-focus)}
 .inspector-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px}
 .shortcut-list{display:grid;grid-template-columns:auto 1fr;gap:7px 10px;margin:0;padding:0;color:var(--color-text-muted);font-size:.75rem}
 .shortcut-list dt,.shortcut-list dd{margin:0}
@@ -189,6 +202,10 @@ kbd{display:inline-block;min-width:25px;padding:2px 5px;border:1px solid var(--c
           </div>
         </div>
         <div class="field">
+          <span class="field-label" id="color-label">Cor</span>
+          <div class="color-group" role="radiogroup" aria-labelledby="color-label" id="color-group"></div>
+        </div>
+        <div class="field">
           <label for="label-input">Rótulo opcional</label>
           <input class="control" id="label-input" type="text" maxlength="12" placeholder="Ex.: R, 3, 5" autocomplete="off">
           <span class="selection-kicker">Até 6 caracteres visíveis</span>
@@ -226,6 +243,16 @@ const SHARP_NOTES=["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
 const FLAT_NOTES=["C","Db","D","Eb","E","F","Gb","G","Ab","A","Bb","B"];
 const NOTE_NAMES={C:"Dó",D:"Ré",E:"Mi",F:"Fá",G:"Sol",A:"Lá",B:"Si"};
 const TYPE_NAMES={filled:"preenchido",outline:"vazado",muted:"abafado"};
+const MARKER_COLORS=[
+  {value:null,label:"Padrão",token:"--color-marker-default"},
+  {value:"--color-marker-blue",label:"Azul",token:"--color-marker-blue"},
+  {value:"--color-marker-green",label:"Verde",token:"--color-marker-green"},
+  {value:"--color-marker-orange",label:"Laranja",token:"--color-marker-orange"},
+  {value:"--color-marker-purple",label:"Roxo",token:"--color-marker-purple"},
+  {value:"--color-marker-teal",label:"Verde-água",token:"--color-marker-teal"},
+  {value:"--color-marker-pink",label:"Rosa",token:"--color-marker-pink"},
+  {value:"--color-marker-gray",label:"Cinza",token:"--color-marker-gray"}
+];
 const MUTED_ONLY_AT_NUT="Marcador abafado só pode ser usado no nut, casa 0.";
 const FILLED_NORMALIZED_AT_NUT="Na casa 0 o marcador preenchido vira vazado, que representa corda solta.";
 
@@ -237,10 +264,11 @@ const refs={
   exportSvg:document.querySelector("#export-svg"),exportPng:document.querySelector("#export-png"),label:document.querySelector("#label-input"),
   readout:document.querySelector("#window-readout"),coordinate:document.querySelector("#selection-coordinate"),badge:document.querySelector("#note-badge"),
   kicker:document.querySelector("#selection-kicker"),selectionName:document.querySelector("#selection-name"),status:document.querySelector("#status"),
-  hint:document.querySelector("#board-hint")
+  hint:document.querySelector("#board-hint"),
+  colorGroup:document.querySelector("#color-group")
 };
 
-const editor={startFret:0,visibleFrets:compactMedia.matches?6:12,selectedMarkerId:null,activeMarkerType:"filled",activeCustomLabel:"",focusedPosition:{stringIndex:0,fret:0}};
+const editor={startFret:0,visibleFrets:compactMedia.matches?6:12,selectedMarkerId:null,activeMarkerType:"filled",activeMarkerColor:null,activeCustomLabel:"",focusedPosition:{stringIndex:0,fret:0}};
 const history={past:[],present:{tuningPresetId:"standard",markers:[]},future:[]};
 let markerSequence=0;
 let statusSequence=0;
@@ -282,13 +310,18 @@ function undo(){if(!history.past.length){announce("Nada para desfazer.",true);re
 function redo(){if(!history.future.length){announce("Nada para refazer.",true);return}labelDraftFor=null;const current=cloneContent(history.present);const target=history.future.shift();history.past.push(current);if(history.past.length>HISTORY_LIMIT)history.past.shift();history.present=target;const added=target.markers.filter(marker=>!current.markers.some(item=>item.id===marker.id));editor.selectedMarkerId=added.length===1?added[0].id:null;render();announce("Ação refeita.")}
 
 function setActiveType(type){editor.activeMarkerType=type;document.querySelectorAll(".type-button").forEach(button=>button.setAttribute("aria-pressed",String(button.dataset.type===type)))}
+function setActiveColor(color){editor.activeMarkerColor=color;refs.colorGroup.querySelectorAll(".color-swatch").forEach(swatch=>{const checked=swatch.dataset.color===String(color??"");swatch.setAttribute("aria-checked",String(checked));swatch.setAttribute("tabindex",checked?"0":"-1")})}
+function applyColorChoice(color,label){const marker=selectedMarker();setActiveColor(color);if(!marker){announce(`Cor ${label.toLowerCase()} ativa.`);return}editSelected({color},`Cor alterada para ${label.toLowerCase()}.`)}
+function colorChoiceFromSwatch(swatch){return MARKER_COLORS.find(entry=>String(entry.value??"")===swatch.dataset.color)||null}
+function initColorGroup(){const fragment=document.createDocumentFragment();MARKER_COLORS.forEach(entry=>{const btn=document.createElement("button");btn.type="button";btn.className="color-swatch";btn.style.backgroundColor=cssTokenColor(entry.token);btn.dataset.color=entry.value??"";btn.setAttribute("role","radio");btn.setAttribute("aria-checked","false");btn.setAttribute("tabindex","-1");btn.setAttribute("aria-label",entry.label);btn.addEventListener("click",()=>applyColorChoice(entry.value,entry.label));fragment.append(btn)});refs.colorGroup.append(fragment);setActiveColor(editor.activeMarkerColor)}
+function handleColorKey(event){const swatches=[...refs.colorGroup.querySelectorAll(".color-swatch")];const index=swatches.findIndex(swatch=>swatch.getAttribute("tabindex")==="0");if(index<0)return;if(event.key==="ArrowRight"||event.key==="ArrowDown"){event.preventDefault();const next=swatches[(index+1)%swatches.length];const choice=colorChoiceFromSwatch(next);if(choice)applyColorChoice(choice.value,choice.label);next.focus()}else if(event.key==="ArrowLeft"||event.key==="ArrowUp"){event.preventDefault();const previous=swatches[(index-1+swatches.length)%swatches.length];const choice=colorChoiceFromSwatch(previous);if(choice)applyColorChoice(choice.value,choice.label);previous.focus()}else if(event.key===" "||event.key==="Enter"){event.preventDefault();const choice=colorChoiceFromSwatch(swatches[index]);if(choice)applyColorChoice(choice.value,choice.label)}}
 function activatePosition(stringIndex,fret){
   if(!visiblePositions().includes(fret)){announce("Posição fora da janela visível.",true);return}
   const existing=markerAt(stringIndex,fret);editor.focusedPosition={stringIndex,fret};
-  if(existing){editor.selectedMarkerId=existing.id;editor.activeCustomLabel=existing.customLabel;setActiveType(existing.type);render();announce(`${positionLabel(stringIndex,fret)} selecionado.`);return}
+  if(existing){editor.selectedMarkerId=existing.id;editor.activeCustomLabel=existing.customLabel;setActiveType(existing.type);setActiveColor(existing.color??null);render();announce(`${positionLabel(stringIndex,fret)} selecionado.`);return}
   if(fret>0&&editor.activeMarkerType==="muted"){announce(MUTED_ONLY_AT_NUT,true);return}
   const type=normalizeType(editor.activeMarkerType,fret);
-  const marker={id:`marker-${++markerSequence}`,stringIndex,fret,type,customLabel:normalizeLabel(editor.activeCustomLabel)};
+  const marker={id:`marker-${++markerSequence}`,stringIndex,fret,type,color:editor.activeMarkerColor,customLabel:normalizeLabel(editor.activeCustomLabel)};
   commitContent(content=>content.markers.push(marker),`${positionLabel(stringIndex,fret)} criado.`,marker.id)
 }
 function editSelected(patch,message){const marker=selectedMarker();if(!marker){announce("Selecione um marcador antes de editar.",true);return}if(patch.type==="muted"&&marker.fret!==0){announce(MUTED_ONLY_AT_NUT,true);return}const safe=patch.type?{...patch,type:normalizeType(patch.type,marker.fret)}:patch;commitContent(content=>{const target=content.markers.find(item=>item.id===marker.id);Object.assign(target,safe)},message,marker.id)}
@@ -307,6 +340,10 @@ function setStartFret(value,source="control"){
 }
 
 function palette(){const styles=getComputedStyle(document.documentElement);return {artboard:styles.getPropertyValue("--color-artboard-bg").trim(),rule:styles.getPropertyValue("--color-artboard-rule").trim(),ink:styles.getPropertyValue("--color-diagram-ink").trim(),string:styles.getPropertyValue("--color-string").trim(),selection:styles.getPropertyValue("--color-selection").trim(),focus:styles.getPropertyValue("--color-focus-artboard").trim(),white:styles.getPropertyValue("--color-white").trim()}}
+function cssTokenColor(token){return getComputedStyle(document.documentElement).getPropertyValue(token).trim()}
+function resolveMarkerColor(marker,colors){const raw=marker.color;if(!raw)return colors.selection;if(raw.startsWith("--"))return cssTokenColor(raw);return raw}
+function markerColorLuminance(hex){const normalized=hex.replace("#","");const value=Number.parseInt(normalized,16);if(Number.isNaN(value))return 0;const channels=[(value>>16)&255,(value>>8)&255,value&255].map(channel=>{const unit=channel/255;return unit<=0.03928?unit/12.92:Math.pow((unit+0.055)/1.055,2.4)});return 0.2126*channels[0]+0.7152*channels[1]+0.0722*channels[2]}
+function markerLabelFill(markerColor,markerType,colors){if(markerType==="outline")return markerColor;return markerColorLuminance(markerColor)>0.55?colors.ink:colors.white}
 function svgNode(tag,attributes={},text=""){const node=document.createElementNS(SVG_NS,tag);Object.entries(attributes).forEach(([name,value])=>node.setAttribute(name,String(value)));if(text)node.textContent=text;return node}
 function append(parent,tag,attributes,text){const node=svgNode(tag,attributes,text);parent.append(node);return node}
 function geometry(){const frets=visibleFretNumbers();const nut=nutVisible();const nutWidth=nut?GEOMETRY.nutWidth:0;const nutX=GEOMETRY.left+GEOMETRY.labelWidth;const fretStart=nutX+nutWidth;const gridWidth=GEOMETRY.width-fretStart-GEOMETRY.right;const fretWidth=gridWidth/Math.max(1,frets.length);const rowGap=(GEOMETRY.bottom-GEOMETRY.top)/5;return {frets,nut,nutWidth,nutX,fretStart,gridWidth,fretWidth,rowGap,stringY:index=>GEOMETRY.top+index*rowGap,fretX:index=>fretStart+(index+.5)*fretWidth}}
@@ -345,11 +382,11 @@ function renderSvg(){
   refs.svg.replaceChildren(root);fitMarkerLabels()
 }
 
-function drawMarker(layer,marker,x,y,colors){const scale=editor.visibleFrets===6?2:GEOMETRY.height>440?1.4:1;const radius=18*scale;if(marker.type==="muted"){append(layer,"line",{x1:x-radius*.7,y1:y-radius*.7,x2:x+radius*.7,y2:y+radius*.7,stroke:colors.ink,"stroke-width":4*scale,"stroke-linecap":"round"});append(layer,"line",{x1:x+radius*.7,y1:y-radius*.7,x2:x-radius*.7,y2:y+radius*.7,stroke:colors.ink,"stroke-width":4*scale,"stroke-linecap":"round"});return}const fill=marker.type==="outline"?colors.artboard:colors.selection;const stroke=marker.type==="outline"?colors.ink:colors.white;append(layer,"circle",{cx:x,cy:y,r:radius,fill,stroke,"stroke-width":3*scale});const label=displayLabel(marker);
+function drawMarker(layer,marker,x,y,colors){const scale=editor.visibleFrets===6?2:GEOMETRY.height>440?1.4:1;const radius=18*scale;if(marker.type==="muted"){append(layer,"line",{x1:x-radius*.7,y1:y-radius*.7,x2:x+radius*.7,y2:y+radius*.7,stroke:colors.ink,"stroke-width":4*scale,"stroke-linecap":"round"});append(layer,"line",{x1:x+radius*.7,y1:y-radius*.7,x2:x-radius*.7,y2:y+radius*.7,stroke:colors.ink,"stroke-width":4*scale,"stroke-linecap":"round"});return}const markerColor=resolveMarkerColor(marker,colors);const fill=marker.type==="outline"?colors.artboard:markerColor;const stroke=marker.type==="outline"?markerColor:colors.white;const textFill=markerLabelFill(markerColor,marker.type,colors);append(layer,"circle",{cx:x,cy:y,r:radius,fill,stroke,"stroke-width":3*scale});const label=displayLabel(marker);
 // Ate tres caracteres usam o corpo cheio; alem disso a fonte encolhe para caber no disco.
 // O fator 3.2 mantem a largura natural abaixo do orcamento de 1.7 x raio em ui-monospace.
 const fontSize=11*scale*(GEOMETRY.height>440?1.35:1)*Math.min(1,3.2/label.length);
-append(layer,"text",{x,y:y+.5,fill:marker.type==="outline"?colors.ink:colors.white,"font-size":fontSize,"font-family":"ui-monospace, monospace","font-weight":800,"text-anchor":"middle","dominant-baseline":"middle","data-fit":radius*1.7},label)}
+append(layer,"text",{x,y:y+.5,fill:textFill,"font-size":fontSize,"font-family":"ui-monospace, monospace","font-weight":800,"text-anchor":"middle","dominant-baseline":"middle","data-fit":radius*1.7},label)}
 // Rede de seguranca independente das metricas da fonte: condensa o que ainda transbordar.
 function fitMarkerLabels(){refs.svg.querySelectorAll("[data-fit]").forEach(node=>{const budget=Number(node.getAttribute("data-fit"));if(node.getComputedTextLength()>budget){node.setAttribute("textLength",budget);node.setAttribute("lengthAdjust","spacingAndGlyphs")}})}
 
@@ -363,7 +400,7 @@ function handleGridKey(event){const stringIndex=Number(event.currentTarget.datas
 function mirrorLabel(value){if(refs.label.value!==value)refs.label.value=value}
 function renderInspector(){
   const marker=selectedMarker();refs.remove.disabled=!marker;refs.deselect.disabled=!marker;refs.clear.disabled=!history.present.markers.length;refs.undo.disabled=!history.past.length;refs.redo.disabled=!history.future.length;refs.previous.disabled=editor.startFret===0;refs.next.disabled=editor.startFret>=maxStartFret();
-  if(marker){const note=noteAt(marker.stringIndex,marker.fret);const shown=displayLabel(marker);editor.activeCustomLabel=marker.customLabel;setActiveType(marker.type);refs.badge.textContent=shown;refs.badge.dataset.long=String(shown.length>3);refs.kicker.textContent=marker.customLabel?`Rótulo ${marker.customLabel} · nota ${spokenNote(note)}`:`Nota ${spokenNote(note)}`;refs.selectionName.textContent=`Corda ${marker.stringIndex+1} · ${marker.fret===0?"nut":`casa ${marker.fret}`}`;refs.coordinate.textContent=`S${marker.stringIndex+1} / F${String(marker.fret).padStart(2,"0")}`;mirrorLabel(marker.customLabel)}else{refs.badge.textContent="—";refs.badge.dataset.long="false";refs.kicker.textContent="Nenhum marcador";refs.selectionName.textContent="Escolha uma posição";refs.coordinate.textContent="—";mirrorLabel(editor.activeCustomLabel)}
+  if(marker){const note=noteAt(marker.stringIndex,marker.fret);const shown=displayLabel(marker);editor.activeCustomLabel=marker.customLabel;setActiveType(marker.type);setActiveColor(marker.color??null);refs.badge.textContent=shown;refs.badge.dataset.long=String(shown.length>3);refs.kicker.textContent=marker.customLabel?`Rótulo ${marker.customLabel} · nota ${spokenNote(note)}`:`Nota ${spokenNote(note)}`;refs.selectionName.textContent=`Corda ${marker.stringIndex+1} · ${marker.fret===0?"nut":`casa ${marker.fret}`}`;refs.coordinate.textContent=`S${marker.stringIndex+1} / F${String(marker.fret).padStart(2,"0")}`;mirrorLabel(marker.customLabel)}else{refs.badge.textContent="—";refs.badge.dataset.long="false";refs.kicker.textContent="Nenhum marcador";refs.selectionName.textContent="Escolha uma posição";refs.coordinate.textContent="—";mirrorLabel(editor.activeCustomLabel)}
   const frets=visibleFretNumbers();refs.readout.textContent=frets.length?`${nutVisible()?"NUT + ":""}${String(frets[0]).padStart(2,"0")}—${String(frets.at(-1)).padStart(2,"0")}`:"NUT";refs.tuning.value=history.present.tuningPresetId;
   const notice=offscreenNotice();refs.hint.textContent=notice||"Nota calculada pela afinação";refs.hint.classList.toggle("offscreen",Boolean(notice))
 }
@@ -389,6 +426,8 @@ function downloadPng(){let sourceUrl="";try{sourceUrl=URL.createObjectURL(new Bl
 refs.exportSvg.addEventListener("click",downloadSvg);refs.exportPng.addEventListener("click",downloadPng);
 
 function benchmarkRender(){const samples=[];for(let index=0;index<110;index+=1){const start=performance.now();render();if(index>=10)samples.push(performance.now()-start)}samples.sort((a,b)=>a-b);return samples[Math.ceil(samples.length*.95)-1]}
+initColorGroup();
+refs.colorGroup.addEventListener("keydown",handleColorKey);
 window.__fretboardEditor={getState:()=>({content:cloneContent(history.present),editor:{...editor}}),activatePosition,setStartFret,undo,redo,exportedSvgMarkup,render,benchmarkRender};
 render();
 if(new URLSearchParams(location.search).has("benchmark"))requestAnimationFrame(()=>announce(`Benchmark local: p95 ${benchmarkRender().toFixed(2)} ms.`));

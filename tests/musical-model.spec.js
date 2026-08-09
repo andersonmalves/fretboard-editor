@@ -91,7 +91,7 @@ test.describe("Modelo musical", () => {
 
     const marker = await fretboard.markerAt(6, 3);
     expect(Object.keys(marker).sort()).toEqual(
-      ["customLabel", "fret", "id", "stringIndex", "type"].sort()
+      ["color", "customLabel", "fret", "id", "stringIndex", "type"].sort()
     );
   });
 });

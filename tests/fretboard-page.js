@@ -35,6 +35,7 @@ class FretboardPage {
     this.selectionName = page.locator("#selection-name");
     this.hint = page.locator("#board-hint");
     this.kicker = page.locator("#selection-kicker");
+    this.colorGroup = page.locator("#color-group");
     this.consoleErrors = [];
   }
 
@@ -60,6 +61,33 @@ class FretboardPage {
 
   toolButton(tipo) {
     return this.page.locator(`.type-button[data-type="${tipo}"]`);
+  }
+
+  colorSwatch(label) {
+    return this.colorGroup.locator(`.color-swatch[aria-label="${label}"]`);
+  }
+
+  colorSwatches() {
+    return this.colorGroup.locator(".color-swatch");
+  }
+
+  /**
+   * Escolhe a cor do proximo marcador. Desmarca antes, porque os swatches editam a selecao
+   * quando ela existe (mesmo padrao dos botoes de tipo).
+   */
+  async pickColor(label) {
+    if (await this.deselect.isEnabled()) await this.deselect.click();
+    await this.colorSwatch(label).click();
+  }
+
+  async markerTokenColor(token) {
+    return this.page.evaluate((name) => {
+      return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    }, token);
+  }
+
+  async diagramInkColor() {
+    return this.markerTokenColor("--color-diagram-ink");
   }
 
   /**

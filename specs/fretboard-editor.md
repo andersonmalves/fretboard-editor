@@ -190,6 +190,8 @@ Os valores finais podem ser calibrados durante a implementação, preservando es
 | `--color-string` | Cordas e detalhe material |
 | `--color-focus` | Foco visível independente da seleção |
 | `--color-destructive` | Remover/limpar, sem compartilhar seleção |
+| `--color-marker-default` | Marcador preenchido sem cor customizada (`var(--color-selection)`) |
+| `--color-marker-blue` … `--color-marker-gray` | Paleta fixa de cores customizadas do marcador |
 
 ## 7. Arquitetura a decidir em ADR
 
@@ -220,6 +222,7 @@ interface Marker {
   stringIndex: number;
   fret: number;
   type: MarkerType;
+  color: string | null;
   customLabel: string;
 }
 
@@ -233,6 +236,7 @@ interface EditorState {
   visibleFrets: number;
   selectedMarkerId: string | null;
   activeMarkerType: MarkerType;
+  activeMarkerColor: string | null;
   activeCustomLabel: string;
 }
 
@@ -247,7 +251,7 @@ Invariantes:
 
 - No máximo um marcador por par `stringIndex + fret`.
 - `selectedMarkerId` referencia marcador existente ou é `null`.
-- Alterar afinação não altera posições, tipos ou rótulos customizados.
+- Alterar afinação não altera posições, tipos, cores ou rótulos customizados.
 - Cada preset declara `accidentalStyle: 'sharp' | 'flat'`; Standard, Drop D, Open G e Open C usam
   sustenidos, enquanto Eb Standard usa bemóis. O marcador mostra classe de altura sem oitava e o
   nome acessível inclui classe + oitava.
@@ -256,6 +260,10 @@ Invariantes:
 - `customLabel` é normalizado com trim, aceita no máximo seis caracteres visíveis e rejeita
   caracteres de controle.
 - `muted` é válido somente na casa 0; `outline` na casa 0 representa corda solta.
+- `color` é `null` ou um token CSS `--color-marker-*` da paleta canônica; `null` resolve para
+  `--color-marker-default` (`var(--color-selection)`). Marcadores `muted` ignoram cor no desenho.
+- A ferramenta de cor ativa (`activeMarkerColor`) é sticky como o tipo: não cria snapshots de
+  histórico e não é resetada ao desmarcar.
 - Histórico registra somente criação, edição, remoção, limpeza e mudança de afinação. Seleção,
   ferramenta ativa, rótulo em digitação e navegação da janela não criam snapshots.
 - Histórico mantém no máximo 50 estados em `past` e 50 em `future`; nova mutação após undo limpa
@@ -390,7 +398,11 @@ isoladamente por seu commit se seu contrato ainda não for dependência de step 
 - [ ] AC-30: Undo/redo segue os eventos e o limite de 50 estados definidos no data model; seleção,
   ferramenta e navegação não criam snapshots.
 - [ ] AC-31: UI, SVG e PNG consomem os mesmos papéis de cor; busca por cores literais fora da
-  definição canônica não encontra duplicação.
+  definição canônica (`:root` e tokens `--color-marker-*`) não encontra duplicação.
+- [ ] AC-37: O inspetor oferece paleta de cor com `radiogroup` acessível; setas navegam entre
+  swatches; a cor escolhida é aplicada ao próximo marcador ou ao selecionado; o valor persiste em
+  undo/redo e troca de afinação; exportação SVG reproduz a cor resolvida; texto do marcador
+  preenchido usa contraste legível (tinta ou branco conforme luminância do fill).
 - [ ] AC-32: A aplicação não faz requisições de rede em runtime e `wc -c index.html` retorna no
   máximo 51.200 bytes.
 - [ ] AC-33: Com reduced motion ativo, nenhuma transição ou animação não essencial permanece.
