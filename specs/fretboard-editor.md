@@ -391,67 +391,75 @@ isoladamente por seu commit se seu contrato ainda não for dependência de step 
 
 ## 14. Acceptance criteria
 
-- [ ] AC-1: Abrir o editor mostra braço de seis cordas e a janela de casas configurada.
-- [ ] AC-2: Criar marcador vazio mostra automaticamente a nota calculada.
-- [ ] AC-3: Notas com `#` e `b` são calculadas corretamente para todos os presets existentes.
-- [ ] AC-4: Clicar/tocar em marcador existente o seleciona sem removê-lo.
-- [ ] AC-5: Alterar tipo ou rótulo atualiza o marcador selecionado.
-- [ ] AC-6: “Remover” e `Delete`/`Backspace` removem somente o marcador selecionado.
-- [ ] AC-7: Undo restaura criação, edição, remoção e limpeza; redo reaplica a ação.
-- [ ] AC-8: Mudar afinação preserva posições e recalcula notas automáticas.
-- [ ] AC-9: Casa inicial aceita `0` e mantém campo, estado e diagrama sincronizados.
-- [ ] AC-10: A casa 12 exibe o marcador duplo de posição.
-- [ ] AC-11: Em 390 px, seis casas ficam visíveis; em 768 e 1440 px, doze casas ficam disponíveis;
+Marcação: `[x]` = implementado e/ou coberto por teste automatizado. Itens manuais permanecem
+`[ ]` mesmo com checklist no README.
+
+- [x] AC-1: Abrir o editor mostra braço de seis cordas e a janela de casas configurada.
+- [x] AC-2: Criar marcador vazio mostra automaticamente a nota calculada.
+- [x] AC-3: Notas com `#` e `b` são calculadas corretamente para todos os presets existentes.
+- [x] AC-4: Clicar/tocar em marcador existente o seleciona sem removê-lo.
+- [x] AC-5: Alterar tipo ou rótulo atualiza o marcador selecionado.
+- [x] AC-6: “Remover” e `Delete`/`Backspace` removem somente o marcador selecionado.
+- [x] AC-7: Undo restaura criação, edição, remoção e limpeza; redo reaplica a ação.
+- [x] AC-8: Mudar afinação preserva posições e recalcula notas automáticas.
+- [x] AC-9: Casa inicial aceita `0` e mantém campo, estado e diagrama sincronizados.
+- [x] AC-10: A casa 12 exibe o marcador duplo de posição.
+- [x] AC-11: Em 390 px, seis casas ficam visíveis; em 768 e 1440 px, doze casas ficam disponíveis;
   em todos os casos, cordas, nut e casas da janela permanecem alcançáveis.
-- [ ] AC-12: Em viewport touch, controles principais medem no mínimo 44×44 px.
-- [ ] AC-13: Setas navegam entre posições; `Enter`/`Space` cria ou seleciona marcador.
+- [x] AC-12: Em viewport touch, controles principais medem no mínimo 44×44 px.
+- [x] AC-13: Setas navegam entre posições; `Enter`/`Space` cria ou seleciona marcador.
 - [ ] AC-14: O foco visível não depende apenas da cor de seleção.
-- [ ] AC-15: Tipo ativo usa nome acessível e estado programático (`aria-pressed` ou equivalente).
-- [ ] AC-16: Região `aria-live` anuncia criação, edição, remoção, undo/redo e erros.
+  _(manual — checklist no README; implementação com `:focus-visible`, sem sessão VO/visual fechada)_
+- [x] AC-15: Tipo ativo usa nome acessível e estado programático (`aria-pressed` ou equivalente).
+- [x] AC-16: Região `aria-live` anuncia criação, edição, remoção, undo/redo e erros.
 - [ ] AC-17: Texto, foco e informação gráfica atendem aos contrastes definidos nos quality attributes.
-- [ ] AC-18: Exportações PNG e SVG reproduzem o diagrama visível, sem crosshair, foco ou contorno
+  _(manual — valores de referência no README; revalidar se tokens mudarem)_
+- [x] AC-18: Exportações PNG e SVG reproduzem o diagrama visível, sem crosshair, foco ou contorno
   de seleção, e não omitem notas/rótulos; o nome do arquivo usa o título sanitizado (fallback
   `diagrama-braco`).
-- [ ] AC-18b: `@media print` define A4 landscape, esconde comandos/inspetor/chrome de edição e
+- [x] AC-18b: `@media print` define A4 landscape, esconde comandos/inspetor/chrome de edição e
   preserva o diagrama (título no SVG) legível na página.
-- [ ] AC-19: Rótulo customizado é escapado no DOM e no arquivo SVG exportado.
-- [ ] AC-20: `lang`, labels, tooltips, mensagens e atalhos usam pt-BR consistente.
-- [ ] AC-21: `Esc` cancela/deseleciona e nunca limpa o diagrama.
-- [ ] AC-22: Limpar diagrama oferece desfazer e não exige modal em operação normal.
-- [ ] AC-23: O editor não produz erros ou warnings no console nos fluxos cobertos.
-- [ ] AC-24: A linha superior é a corda 1 (`E4`) e a inferior é a corda 6 (`E2`) na afinação padrão.
-- [ ] AC-25: Casa inicial vazia, não numérica ou fora do intervalo mantém o último estado válido e
+- [x] AC-19: Rótulo customizado é escapado no DOM e no arquivo SVG exportado.
+- [x] AC-20: `lang`, labels, tooltips, mensagens e atalhos usam pt-BR consistente.
+- [x] AC-21: `Esc` cancela/deseleciona e nunca limpa o diagrama.
+- [x] AC-22: Limpar diagrama oferece desfazer e não exige modal em operação normal.
+- [x] AC-23: O editor não produz erros ou warnings no console nos fluxos cobertos.
+- [x] AC-24: A linha superior é a corda 1 (`E4`) e a inferior é a corda 6 (`E2`) na afinação padrão.
+- [x] AC-25: Casa inicial vazia, não numérica ou fora do intervalo mantém o último estado válido e
   mostra erro inline associado ao campo.
-- [ ] AC-26: Falha de exportação mostra erro, preserva o diagrama e permite nova tentativa.
-- [ ] AC-27: Marcador `muted` só pode ocupar a casa 0; `outline` na casa 0 representa corda solta.
-- [ ] AC-28: Em 390 px, anterior/próxima e casa inicial alcançam todas as posições de 0 a 24 sem
+- [x] AC-26: Falha de exportação mostra erro, preserva o diagrama e permite nova tentativa.
+- [x] AC-27: Marcador `muted` só pode ocupar a casa 0; `outline` na casa 0 representa corda solta.
+- [x] AC-28: Em 390 px, anterior/próxima e casa inicial alcançam todas as posições de 0 a 24 sem
   tornar nenhuma posição inacessível.
-- [ ] AC-29: Standard, Drop D, Open G e Open C exibem sustenidos; Eb Standard exibe bemóis; o nome
+- [x] AC-29: Standard, Drop D, Open G e Open C exibem sustenidos; Eb Standard exibe bemóis; o nome
   acessível inclui a oitava.
-- [ ] AC-30: Undo/redo segue os eventos e o limite de 50 estados definidos no data model; seleção,
+- [x] AC-30: Undo/redo segue os eventos e o limite de 50 estados definidos no data model; seleção,
   ferramenta e navegação não criam snapshots.
 - [ ] AC-31: UI, SVG e PNG consomem os mesmos papéis de cor; busca por cores literais fora da
   definição canônica (`:root` e tokens `--color-marker-*`) não encontra duplicação.
-- [ ] AC-37: O inspetor oferece paleta de cor com `radiogroup` acessível; setas navegam entre
+  _(renderer usa `palette()`/tokens; sem auditoria estática automatizada de literais)_
+- [x] AC-37: O inspetor oferece paleta de cor com `radiogroup` acessível; setas navegam entre
   swatches; a cor escolhida é aplicada ao próximo marcador ou ao selecionado; o valor persiste em
   undo/redo e troca de afinação; exportação SVG reproduz a cor resolvida; texto do marcador
   preenchido usa contraste legível (tinta ou branco conforme luminância do fill).
-- [ ] AC-38: O título do diagrama é editável na barra de comandos; alterações refletem no SVG e na
+- [x] AC-38: O título do diagrama é editável na barra de comandos; alterações refletem no SVG e na
   exportação; título vazio restaura o padrão; undo/redo inclui mudanças de título.
-- [ ] AC-39: A ferramenta Ligar cria linhas entre dois marcadores distintos; pares duplicados são
+- [x] AC-39: A ferramenta Ligar cria linhas entre dois marcadores distintos; pares duplicados são
   rejeitados; a cor da ligação é independente e sticky; undo/redo cobre criação e remoção.
-- [ ] AC-40: Remover marcador ou limpar o diagrama remove ligações associadas; exportação SVG/PNG
+- [x] AC-40: Remover marcador ou limpar o diagrama remove ligações associadas; exportação SVG/PNG
   reproduz ligações visíveis sem affordances de edição.
-- [ ] AC-41: Com marcador selecionado, o inspetor lista ligações incidentes com remoção individual.
-- [ ] AC-32: A aplicação não faz requisições de rede em runtime e `wc -c index.html` retorna no
+- [x] AC-41: Com marcador selecionado, o inspetor lista ligações incidentes com remoção individual.
+- [x] AC-32: A aplicação não faz requisições de rede em runtime e `wc -c index.html` retorna no
   máximo 59.392 bytes ([ADR 002](../adr/002-budget-bytes-transpor-forma.md)).
-- [ ] AC-33: Com reduced motion ativo, nenhuma transição ou animação não essencial permanece.
-- [ ] AC-34: Labels com `<>&"'`, whitespace e caracteres de controle são normalizados/rejeitados
+- [x] AC-33: Com reduced motion ativo, nenhuma transição ou animação não essencial permanece.
+- [x] AC-34: Labels com `<>&"'`, whitespace e caracteres de controle são normalizados/rejeitados
   conforme o data model e nunca criam markup, atributos ou URLs.
 - [ ] AC-35: No Chrome estável da máquina de desenvolvimento, o p95 de 100 atualizações após dez
   aquecimentos permanece abaixo de 16 ms com 72 posições fretadas + seis alvos do nut.
+  _(harness `?benchmark=` + medição citada no README; sem assert na suíte Playwright)_
 - [ ] AC-36: O fluxo por teclado passa em Chrome, Firefox e Safari estáveis; nomes, foco e anúncios
   passam em Chrome e Safari estáveis com VoiceOver no macOS.
+  _(teclado: matriz Playwright; VoiceOver: checklist manual no README — ainda aberto)_
 
 ## 15. Edge cases
 

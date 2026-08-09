@@ -118,6 +118,35 @@ Na versão atual:
 
 A validação com VoiceOver permanece manual e recomendada antes de publicação pública.
 
+### Checklist pré-publicação (manual)
+
+Não automatizar VoiceOver. Rodar com o servidor local (`python3 -m http.server 4176 --bind 127.0.0.1`)
+antes de publicar.
+
+**AC-14 — foco visível**
+
+- [ ] Tabular pela command bar, inspetor e grade: o anel de foco é visível em cada controle.
+- [ ] Na prancha, o foco da célula não depende só da cor de seleção (outline/anel distinto).
+- [ ] Conferir em Chrome e Safari estáveis.
+
+**AC-17 — contraste**
+
+- [ ] Texto normal da UI ≥ 4,5:1 (DevTools / Contrast Checker).
+- [ ] Foco e informação gráfica na prancha ≥ 3:1 (referência atual no README: foco 5,12:1;
+  trastes/regras 3,32:1 — revalidar se tokens mudarem).
+- [ ] Texto de marcador preenchido permanece legível em fills claros e escuros da paleta.
+
+**AC-36 — teclado + VoiceOver (parte assistiva)**
+
+- [ ] Fluxo criar → editar rótulo → remover → desfazer só por teclado (Chrome, Firefox, Safari).
+  A matriz Playwright cobre o caminho de teclado; este item é smoke humano final.
+- [ ] VoiceOver (macOS) + Safari: nomes acessíveis das células, ferramentas e anúncios
+  `aria-live` fazem sentido ao criar, editar, remover e exportar.
+- [ ] VoiceOver + Chrome: mesmo smoke curto (criar um marcador, ouvir o anúncio, navegar a grade).
+
+Marcar estes itens só após a sessão manual. Não fechar AC-14 / AC-17 / a parte VoiceOver de AC-36
+nas specs só porque este checklist existe.
+
 ## Testes
 
 A suíte é end-to-end com Playwright e dirige a interface real — cliques, teclado e campos. O estado
@@ -142,11 +171,16 @@ npm run test:ui           # modo interativo
 | `tests/label.spec.js` | AC-19, AC-34, rótulo no nome acessível |
 | `tests/marker-label-fit.spec.js` | Ajuste do rótulo ao disco do marcador |
 | `tests/keyboard.spec.js` | AC-6, AC-13, AC-21 |
-| `tests/export.spec.js` | AC-18, AC-26, AC-32 |
+| `tests/export.spec.js` | AC-18, AC-18b (CSS print), AC-26, AC-32 |
 | `tests/responsive.spec.js` | AC-11, AC-12, AC-23, AC-33 |
+| `tests/marker-color.spec.js` | AC-37 |
+| `tests/diagram-title.spec.js` | AC-38 |
+| `tests/connections.spec.js` | AC-39, AC-40, AC-41 |
+| `tests/transpose-shape.spec.js` | AC-T1…AC-T9 |
 
-Permanecem fora do alcance automatizado: AC-17 (contraste medido), AC-14 (avaliação visual do foco)
-e a parte de AC-36 referente a VoiceOver.
+Permanecem fora do alcance automatizado: AC-14 (foco visual), AC-17 (contraste medido), AC-31
+(auditoria estática de cores literais), AC-35 (p95 na máquina de desenvolvimento) e a parte de
+AC-36 referente a VoiceOver — ver checklist pré-publicação acima.
 
 ## Verificações locais
 
@@ -166,13 +200,16 @@ python3 -m http.server 4176 --bind 127.0.0.1
 ```text
 .
 ├── index.html                         # SPA autocontida
-├── README.md                          # Visão geral e instruções
+├── AGENTS.md                          # Orientação curta para agentes
+├── README.md                          # Visão geral, QA e checklist manual
 ├── package.json                       # Somente dependências de desenvolvimento
 ├── playwright.config.js               # Matriz Chromium, Firefox e WebKit
 ├── adr/
-│   └── 001-svg-canonico-grade-html-semantica.md
+│   ├── 001-svg-canonico-grade-html-semantica.md
+│   └── 002-budget-bytes-transpor-forma.md
 ├── specs/
 │   ├── fretboard-editor.md            # Especificação aprovada
+│   ├── transpose-shape.md             # Spec lite — transpor forma
 │   └── steps/                         # Handoffs de implementação
 └── tests/                             # Suíte end-to-end
     ├── fixtures.js

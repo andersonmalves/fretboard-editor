@@ -39,28 +39,30 @@ preservando a geometria relativa, para estudar shapes móveis sem redesenhar mar
 
 ## Acceptance criteria
 
-- [ ] AC-T1: Com um ou mais marcadores, acionar **+1 casa** incrementa o `fret` de **todos** os
+Cobertura: `tests/transpose-shape.spec.js` (+ orçamento/rede em `tests/export.spec.js` para AC-T9).
+
+- [x] AC-T1: Com um ou mais marcadores, acionar **+1 casa** incrementa o `fret` de **todos** os
   marcadores em 1; **−1 casa** decrementa em 1. Cordas, cores, rótulos customizados e ids
   permanecem iguais.
-- [ ] AC-T2: Ligações existentes continuam conectando os mesmos marcadores após a transposição
+- [x] AC-T2: Ligações existentes continuam conectando os mesmos marcadores após a transposição
   (sem recriar pares) e aparecem na exportação SVG/PNG nas novas posições quando visíveis.
-- [ ] AC-T3: Se **qualquer** marcador resultaria em `fret < 0` ou `fret > 24`, a operação é
+- [x] AC-T3: Se **qualquer** marcador resultaria em `fret < 0` ou `fret > 24`, a operação é
   rejeitada por completo: nenhum marcador muda, nenhum snapshot de histórico é criado, e a região
   `aria-live` anuncia o erro em pt-BR.
-- [ ] AC-T4: Diagrama sem marcadores: os controles de transpor ficam desabilitados (ou equivalentes
+- [x] AC-T4: Diagrama sem marcadores: os controles de transpor ficam desabilitados (ou equivalentes
   não acionáveis) e não criam histórico.
-- [ ] AC-T5: Uma transposição bem-sucedida cria **um** snapshot de undo; undo restaura frets e tipos
+- [x] AC-T5: Uma transposição bem-sucedida cria **um** snapshot de undo; undo restaura frets e tipos
   anteriores; redo reaplica. Título, afinação, ferramenta ativa e `startFret` não mudam pela
   operação.
-- [ ] AC-T6: Após mover, tipos respeitam os invariantes do nut: `muted` que deixa a casa 0 vira
+- [x] AC-T6: Após mover, tipos respeitam os invariantes do nut: `muted` que deixa a casa 0 vira
   `filled`; `filled` que chega à casa 0 vira `outline`; demais tipos permanecem.
-- [ ] AC-T7: Notas automáticas (rótulo vazio) refletem as novas casas; rótulos customizados não são
+- [x] AC-T7: Notas automáticas (rótulo vazio) refletem as novas casas; rótulos customizados não são
   alterados; seleção atual (se houver) permanece no mesmo marcador.
-- [ ] AC-T8: UI mínima na command bar: dois botões **−1 casa** e **+1 casa**, com nome acessível
+- [x] AC-T8: UI mínima na command bar: dois botões **−1 casa** e **+1 casa**, com nome acessível
   explícito (ex.: “Transpor forma uma casa em direção ao nut” / “… em direção ao corpo”), alvo
   tátil ≥ 44×44 px em viewport touch, e anúncio `aria-live` de sucesso (ex.: “Forma transposta uma
   casa para cima.”).
-- [ ] AC-T9: `wc -c index.html` ≤ **59.392** (teto do ADR 002); sem rede em runtime; sem framework.
+- [x] AC-T9: `wc -c index.html` ≤ **59.392** (teto do ADR 002); sem rede em runtime; sem framework.
 
 ## Comportamento canônico
 
