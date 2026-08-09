@@ -139,6 +139,16 @@ kbd{display:inline-block;min-width:25px;padding:2px 5px;border:1px solid var(--c
 }
 @media(pointer:coarse){.board-canvas{aspect-ratio:12/11}.grid-cell{min-width:44px;min-height:44px}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important;animation:none!important}.button:active:not(:disabled){transform:none}}
+@media print{
+  @page{size:A4 landscape;margin:10mm}
+  .skip-link,.masthead,.command-bar,.inspector,.board-caption,.status,.panel-header,.hit-grid{display:none!important}
+  html,body{background:#fff;color:#000}
+  .app{width:auto;max-width:none;padding:0;margin:0}
+  .workspace{display:block}
+  .artboard-panel,.artboard-pad{border:0;background:transparent;padding:0}
+  .board-canvas{box-shadow:none;border-radius:0;width:100%;height:auto;overflow:visible;aspect-ratio:auto}
+  #fretboard-svg{position:static;width:100%;height:auto;max-height:100vh}
+}
 </style>
 </head>
 <body>
@@ -466,9 +476,10 @@ function updateResponsiveGeometry(){editor.visibleFrets=compactMedia.matches?6:1
 compactMedia.addEventListener("change",updateResponsiveGeometry);touchMedia.addEventListener("change",updateResponsiveGeometry);
 
 function exportedSvgMarkup(){const clone=refs.svg.cloneNode(true);clone.querySelectorAll("[data-editor-layer]").forEach(node=>node.remove());clone.querySelectorAll("[data-fit]").forEach(node=>node.removeAttribute("data-fit"));clone.removeAttribute("role");clone.removeAttribute("aria-labelledby");clone.setAttribute("xmlns",SVG_NS);clone.setAttribute("width",String(GEOMETRY.width));clone.setAttribute("height",String(GEOMETRY.height));return new XMLSerializer().serializeToString(clone)}
+function exportBasename(){const name=displayedDiagramTitle().replace(/[<>:"/\\|?*\u0000-\u001f]/g," ").replace(/\s+/g," ").trim().replace(/[.]+$/,"");return name||"diagrama-braco"}
 function triggerDownload(blob,fileName){let url="";try{url=URL.createObjectURL(blob);const link=document.createElement("a");link.href=url;link.download=fileName;document.body.append(link);link.click();link.remove()}finally{if(url)window.setTimeout(()=>URL.revokeObjectURL(url),0)}}
-function downloadSvg(){try{triggerDownload(new Blob([exportedSvgMarkup()],{type:"image/svg+xml;charset=utf-8"}),"diagrama-braco.svg");announce(`SVG preparado para download.${exportWarning()}`)}catch(error){announce("Não foi possível gerar o SVG. Tente novamente.",true)}}
-function downloadPng(){let sourceUrl="";try{sourceUrl=URL.createObjectURL(new Blob([exportedSvgMarkup()],{type:"image/svg+xml;charset=utf-8"}));const image=new Image();image.onload=()=>{try{const scale=2;const canvas=document.createElement("canvas");canvas.width=GEOMETRY.width*scale;canvas.height=GEOMETRY.height*scale;const context=canvas.getContext("2d");if(!context)throw new Error("Canvas indisponível");context.drawImage(image,0,0,canvas.width,canvas.height);canvas.toBlob(blob=>{if(!blob){announce("Não foi possível gerar o PNG. Tente novamente.",true);return}try{triggerDownload(blob,"diagrama-braco.png");announce(`PNG preparado para download.${exportWarning()}`)}catch(error){announce("Não foi possível baixar o PNG. Tente novamente.",true)}},"image/png")}catch(error){announce("Não foi possível gerar o PNG. Tente novamente.",true)}finally{URL.revokeObjectURL(sourceUrl)}};image.onerror=()=>{URL.revokeObjectURL(sourceUrl);announce("Não foi possível rasterizar o diagrama. Tente novamente.",true)};image.src=sourceUrl}catch(error){if(sourceUrl)URL.revokeObjectURL(sourceUrl);announce("Não foi possível gerar o PNG. Tente novamente.",true)}}
+function downloadSvg(){try{triggerDownload(new Blob([exportedSvgMarkup()],{type:"image/svg+xml;charset=utf-8"}),`${exportBasename()}.svg`);announce(`SVG preparado para download.${exportWarning()}`)}catch(error){announce("Não foi possível gerar o SVG. Tente novamente.",true)}}
+function downloadPng(){let sourceUrl="";try{sourceUrl=URL.createObjectURL(new Blob([exportedSvgMarkup()],{type:"image/svg+xml;charset=utf-8"}));const image=new Image();image.onload=()=>{try{const scale=2;const canvas=document.createElement("canvas");canvas.width=GEOMETRY.width*scale;canvas.height=GEOMETRY.height*scale;const context=canvas.getContext("2d");if(!context)throw new Error("Canvas indisponível");context.drawImage(image,0,0,canvas.width,canvas.height);canvas.toBlob(blob=>{if(!blob){announce("Não foi possível gerar o PNG. Tente novamente.",true);return}try{triggerDownload(blob,`${exportBasename()}.png`);announce(`PNG preparado para download.${exportWarning()}`)}catch(error){announce("Não foi possível baixar o PNG. Tente novamente.",true)}},"image/png")}catch(error){announce("Não foi possível gerar o PNG. Tente novamente.",true)}finally{URL.revokeObjectURL(sourceUrl)}};image.onerror=()=>{URL.revokeObjectURL(sourceUrl);announce("Não foi possível rasterizar o diagrama. Tente novamente.",true)};image.src=sourceUrl}catch(error){if(sourceUrl)URL.revokeObjectURL(sourceUrl);announce("Não foi possível gerar o PNG. Tente novamente.",true)}}
 refs.exportSvg.addEventListener("click",downloadSvg);refs.exportPng.addEventListener("click",downloadPng);
 function benchmarkRender(){const samples=[];for(let index=0;index<110;index+=1){const start=performance.now();render();if(index>=10)samples.push(performance.now()-start)}samples.sort((a,b)=>a-b);return samples[Math.ceil(samples.length*.95)-1]}
 initColorGroup();

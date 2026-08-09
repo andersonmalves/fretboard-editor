@@ -66,7 +66,7 @@ test.describe("Exportacao", () => {
     expect(textos).toContain("NUT");
   });
 
-  test("baixar SVG entrega um arquivo com o nome esperado", async ({ fretboard }) => {
+  test("baixar SVG entrega um arquivo com o nome do titulo", async ({ fretboard }) => {
     await fretboard.pickTool("filled");
     await fretboard.activate(6, 3);
 
@@ -75,14 +75,15 @@ test.describe("Exportacao", () => {
       fretboard.exportSvg.click()
     ]);
 
-    expect(download.suggestedFilename()).toBe("diagrama-braco.svg");
+    // Titulo padrao sanitizado (barra vira espaco).
+    expect(download.suggestedFilename()).toBe("FRETBOARD 06 STRING.svg");
     const conteudo = fs.readFileSync(await download.path(), "utf8");
     expect(conteudo).toContain("<svg");
     expect(conteudo).toContain("</svg>");
     await expect(fretboard.status).toContainText("SVG preparado");
   });
 
-  test("baixar PNG entrega um arquivo raster valido", async ({ fretboard }) => {
+  test("baixar PNG entrega um arquivo raster valido com o nome do titulo", async ({ fretboard }) => {
     await fretboard.pickTool("filled");
     await fretboard.activate(6, 3);
 
@@ -91,11 +92,42 @@ test.describe("Exportacao", () => {
       fretboard.exportPng.click()
     ]);
 
-    expect(download.suggestedFilename()).toBe("diagrama-braco.png");
+    expect(download.suggestedFilename()).toBe("FRETBOARD 06 STRING.png");
     const bytes = fs.readFileSync(await download.path());
     // Assinatura PNG.
     expect([...bytes.subarray(0, 4)]).toEqual([0x89, 0x50, 0x4e, 0x47]);
     await expect(fretboard.status).toContainText("PNG preparado");
+  });
+
+  test("export usa titulo customizado sanitizado como basename", async ({ fretboard }) => {
+    await fretboard.setDiagramTitle("Pentatonica A / forma 1");
+
+    const [download] = await Promise.all([
+      fretboard.page.waitForEvent("download"),
+      fretboard.exportSvg.click()
+    ]);
+
+    expect(download.suggestedFilename()).toBe("Pentatonica A forma 1.svg");
+  });
+
+  test("export sanitize caracteres invalidos e cai no fallback se sobrar vazio", async ({
+    fretboard
+  }) => {
+    await fretboard.setDiagramTitle('A<>:"/\\|?*B');
+
+    const [downloadOk] = await Promise.all([
+      fretboard.page.waitForEvent("download"),
+      fretboard.exportSvg.click()
+    ]);
+    expect(downloadOk.suggestedFilename()).toBe("A B.svg");
+
+    // Barras sobrevivem no titulo do diagrama, mas viram vazias no basename → fallback.
+    await fretboard.setDiagramTitle("///");
+    const [downloadFallback] = await Promise.all([
+      fretboard.page.waitForEvent("download"),
+      fretboard.exportPng.click()
+    ]);
+    expect(downloadFallback.suggestedFilename()).toBe("diagrama-braco.png");
   });
 
   test("exportar um diagrama vazio nao falha", async ({ fretboard }) => {
@@ -104,7 +136,7 @@ test.describe("Exportacao", () => {
       fretboard.exportSvg.click()
     ]);
 
-    expect(download.suggestedFilename()).toBe("diagrama-braco.svg");
+    expect(download.suggestedFilename()).toBe("FRETBOARD 06 STRING.svg");
   });
 
   test("AC-26: falha ao exportar preserva o diagrama e permite nova tentativa", async ({ page }) => {
@@ -138,7 +170,7 @@ test.describe("Exportacao", () => {
       page.waitForEvent("download"),
       fretboard.exportSvg.click()
     ]);
-    expect(download.suggestedFilename()).toBe("diagrama-braco.svg");
+    expect(download.suggestedFilename()).toBe("FRETBOARD 06 STRING.svg");
   });
 
   test("AC-32: nao ha requisicao de rede em runtime", async ({ page }) => {
@@ -177,6 +209,15 @@ test.describe("Exportacao", () => {
 
     expect(csp).toContain("default-src 'none'");
     expect(csp).not.toContain("connect-src");
+  });
+
+  test("CSS de impressao A4 landscape esta presente no documento", () => {
+    const html = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
+
+    expect(html).toContain("@media print");
+    expect(html).toContain("size:A4 landscape");
+    expect(html).toMatch(/\.command-bar[\s\S]*?display:none/);
+    expect(html).toMatch(/\.inspector[\s\S]*?display:none/);
   });
 });
 

@@ -72,7 +72,11 @@ com uma experiência consistente de mobile a desktop.
 - **Given** um diagrama configurado
 - **When** o usuário exporta PNG ou SVG
 - **Then** o arquivo reproduz o artboard visível, com notas, rótulos, marcadores, ligações e fundo claros
-
+- **And** o basename do download é o título atual do diagrama, sanitizado para nome de arquivo
+  (caracteres inválidos removidos); se o resultado ficar vazio, usa `diagrama-braco`; extensões
+  `.svg` / `.png` permanecem
+- **And** a impressão (`@media print`) usa A4 landscape, oculta a UI de edição e mostra o diagrama
+  (título já está no SVG)
 ### US-10: Ligar marcadores com linhas
 
 - **Given** que existem dois ou mais marcadores no diagrama
@@ -406,7 +410,10 @@ isoladamente por seu commit se seu contrato ainda não for dependência de step 
 - [ ] AC-16: Região `aria-live` anuncia criação, edição, remoção, undo/redo e erros.
 - [ ] AC-17: Texto, foco e informação gráfica atendem aos contrastes definidos nos quality attributes.
 - [ ] AC-18: Exportações PNG e SVG reproduzem o diagrama visível, sem crosshair, foco ou contorno
-  de seleção, e não omitem notas/rótulos.
+  de seleção, e não omitem notas/rótulos; o nome do arquivo usa o título sanitizado (fallback
+  `diagrama-braco`).
+- [ ] AC-18b: `@media print` define A4 landscape, esconde comandos/inspetor/chrome de edição e
+  preserva o diagrama (título no SVG) legível na página.
 - [ ] AC-19: Rótulo customizado é escapado no DOM e no arquivo SVG exportado.
 - [ ] AC-20: `lang`, labels, tooltips, mensagens e atalhos usam pt-BR consistente.
 - [ ] AC-21: `Esc` cancela/deseleciona e nunca limpa o diagrama.
