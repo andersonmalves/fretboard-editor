@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="description" content="Editor acessível de diagramas para braço de violão e guitarra.">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src blob: data:">
+<link rel="icon" href="data:,">
 <title>Editor de braço</title>
 <style>
 :root {
@@ -89,10 +90,12 @@ h1{margin:0;font-size:clamp(1.35rem,2.2vw,2rem);font-weight:680;letter-spacing:-
 .grid-cell:focus-visible{z-index:3;outline:3px solid var(--color-focus-artboard);outline-offset:2px}
 .board-caption{display:flex;justify-content:space-between;gap:16px;padding:11px 3px 0;color:var(--color-text-muted);font-size:.74rem}
 .board-caption span:last-child{text-align:right}
+.board-caption .offscreen{color:var(--color-error);font-weight:700}
 .inspector{position:sticky;top:14px}
 .inspector-body{display:grid;gap:18px;padding:18px}
 .selection-card{display:grid;grid-template-columns:52px 1fr;gap:12px;align-items:center;min-height:60px}
 .note-badge{display:grid;place-items:center;width:52px;height:52px;border-radius:50%;background:var(--color-artboard-bg);color:var(--color-diagram-ink);font:750 1rem/1 ui-monospace,SFMono-Regular,Consolas,monospace}
+.note-badge[data-long="true"]{font-size:.7rem}
 .selection-kicker{color:var(--color-text-muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.08em}
 .selection-name{margin-top:3px;font-weight:700}
 .type-group{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
@@ -166,7 +169,7 @@ kbd{display:inline-block;min-width:25px;padding:2px 5px;border:1px solid var(--c
           <svg id="fretboard-svg" viewBox="0 0 1200 440" role="img" aria-labelledby="svg-title svg-description"></svg>
           <div class="hit-grid" id="fretboard-grid" role="grid" aria-label="Posições do braço. Use as setas para navegar e Enter ou Espaço para criar ou selecionar."></div>
         </div>
-        <div class="board-caption"><span id="board-caption-primary">Corda 1 no topo · corda 6 na base</span><span>Nut sempre acessível · nota calculada pela afinação</span></div>
+        <div class="board-caption"><span id="board-caption-primary">Corda 1 no topo · corda 6 na base</span><span id="board-hint">Nota calculada pela afinação</span></div>
       </div>
     </section>
 
@@ -223,6 +226,8 @@ const SHARP_NOTES=["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
 const FLAT_NOTES=["C","Db","D","Eb","E","F","Gb","G","Ab","A","Bb","B"];
 const NOTE_NAMES={C:"Dó",D:"Ré",E:"Mi",F:"Fá",G:"Sol",A:"Lá",B:"Si"};
 const TYPE_NAMES={filled:"preenchido",outline:"vazado",muted:"abafado"};
+const MUTED_ONLY_AT_NUT="Marcador abafado só pode ser usado no nut, casa 0.";
+const FILLED_NORMALIZED_AT_NUT="Na casa 0 o marcador preenchido vira vazado, que representa corda solta.";
 
 const refs={
   svg:document.querySelector("#fretboard-svg"),grid:document.querySelector("#fretboard-grid"),canvas:document.querySelector("#board-canvas"),
@@ -231,7 +236,8 @@ const refs={
   clear:document.querySelector("#clear-button"),remove:document.querySelector("#remove-button"),deselect:document.querySelector("#deselect-button"),
   exportSvg:document.querySelector("#export-svg"),exportPng:document.querySelector("#export-png"),label:document.querySelector("#label-input"),
   readout:document.querySelector("#window-readout"),coordinate:document.querySelector("#selection-coordinate"),badge:document.querySelector("#note-badge"),
-  kicker:document.querySelector("#selection-kicker"),selectionName:document.querySelector("#selection-name"),status:document.querySelector("#status")
+  kicker:document.querySelector("#selection-kicker"),selectionName:document.querySelector("#selection-name"),status:document.querySelector("#status"),
+  hint:document.querySelector("#board-hint")
 };
 
 const editor={startFret:0,visibleFrets:compactMedia.matches?6:12,selectedMarkerId:null,activeMarkerType:"filled",activeCustomLabel:"",focusedPosition:{stringIndex:0,fret:0}};
@@ -239,64 +245,85 @@ const history={past:[],present:{tuningPresetId:"standard",markers:[]},future:[]}
 let markerSequence=0;
 let statusSequence=0;
 let statusTimer=0;
+let labelDraftFor=null;
 
 function cloneContent(content){return {tuningPresetId:content.tuningPresetId,markers:content.markers.map(marker=>({...marker}))}}
 function markerAt(stringIndex,fret,content=history.present){return content.markers.find(marker=>marker.stringIndex===stringIndex&&marker.fret===fret)||null}
 function selectedMarker(){return history.present.markers.find(marker=>marker.id===editor.selectedMarkerId)||null}
 function currentTuning(){return TUNINGS[history.present.tuningPresetId]}
 function visibleFretNumbers(){const first=editor.startFret===0?1:editor.startFret;const count=Math.min(editor.visibleFrets,MAX_FRET-first+1);return Array.from({length:Math.max(0,count)},(_,index)=>first+index)}
+// O nut so pertence ao diagrama quando a janela comeca na primeira posicao. Fora dela a
+// borda esquerda e um traste comum, como em qualquer diagrama de posicao.
+// A janela nunca encolhe no fim do braco: o inicio recua para manter as casas visiveis.
+function maxStartFret(){return Math.max(0,MAX_FRET-editor.visibleFrets+1)}
+function nutVisible(){return editor.startFret===0}
+function visiblePositions(){return nutVisible()?[0,...visibleFretNumbers()]:visibleFretNumbers()}
+function hiddenMarkers(){const positions=visiblePositions();return history.present.markers.filter(marker=>!positions.includes(marker.fret))}
+function offscreenNotice(){const count=hiddenMarkers().length;return count?`${count} ${count===1?"marcador":"marcadores"} fora da janela`:""}
+function offscreenSuffix(){const notice=offscreenNotice();return notice?` ${notice}.`:""}
+function exportWarning(){const count=hiddenMarkers().length;return count?` ${offscreenNotice()} ${count===1?"não entrou":"não entraram"} no arquivo.`:""}
 function normalizeLabel(value){return Array.from(value.replace(/[\u0000-\u001f\u007f]/g,"").replace(/\s+/g," ").trim()).slice(0,6).join("")}
+function normalizeType(type,fret){return fret===0&&type==="filled"?"outline":type}
 function parsePitch(value){const match=/^([A-G])([#b]?)(-?\d)$/.exec(value);if(!match)throw new Error("Nota de afinação inválida");const base={C:0,D:2,E:4,F:5,G:7,A:9,B:11}[match[1]];const accidental=match[2]==="#"?1:match[2]==="b"?-1:0;return (Number(match[3])+1)*12+base+accidental}
 function noteAt(stringIndex,fret){const tuning=currentTuning();const pitch=parsePitch(tuning.notes[stringIndex])+fret;const notes=tuning.accidentalStyle==="flat"?FLAT_NOTES:SHARP_NOTES;return {pitchClass:notes[((pitch%12)+12)%12],octave:Math.floor(pitch/12)-1}}
 function spokenNote(note){const base=NOTE_NAMES[note.pitchClass[0]];const accidental=note.pitchClass.includes("#")?" sustenido":note.pitchClass.includes("b")?" bemol":"";return `${base}${accidental} ${note.octave}`}
 function displayLabel(marker){return marker.customLabel||noteAt(marker.stringIndex,marker.fret).pitchClass}
-function positionLabel(stringIndex,fret){const note=noteAt(stringIndex,fret);const occupancy=markerAt(stringIndex,fret);const position=fret===0?"corda solta":`casa ${fret}`;const state=occupancy?`marcador ${TYPE_NAMES[occupancy.type]}`:"vazia";return `Corda ${stringIndex+1}, ${position}, nota ${spokenNote(note)}, ${state}`}
+function positionLabel(stringIndex,fret){const note=noteAt(stringIndex,fret);const occupancy=markerAt(stringIndex,fret);const position=fret===0?"corda solta":`casa ${fret}`;const state=occupancy?`marcador ${TYPE_NAMES[occupancy.type]}${occupancy.customLabel?`, rótulo ${occupancy.customLabel}`:""}`:"vazia";return `Corda ${stringIndex+1}, ${position}, nota ${spokenNote(note)}, ${state}`}
 function announce(message,isError=false){statusSequence+=1;refs.status.textContent=`${message}${statusSequence%2?"":" "}`;refs.status.style.color=isError?"var(--color-error)":"var(--color-success)";refs.status.classList.add("visible");window.clearTimeout(statusTimer);statusTimer=window.setTimeout(()=>refs.status.classList.remove("visible"),4000)}
 function keepSelectionValid(){if(editor.selectedMarkerId&&!selectedMarker())editor.selectedMarkerId=null}
 function commitContent(mutator,message,preferredSelection){
+  labelDraftFor=null;
   const previous=cloneContent(history.present);const next=cloneContent(history.present);mutator(next);
   if(JSON.stringify(previous)===JSON.stringify(next))return false;
   history.past.push(previous);if(history.past.length>HISTORY_LIMIT)history.past.shift();history.present=next;history.future=[];
   editor.selectedMarkerId=preferredSelection===undefined?editor.selectedMarkerId:preferredSelection;keepSelectionValid();render();announce(message);return true
 }
-function undo(){if(!history.past.length){announce("Nada para desfazer.",true);return}const current=cloneContent(history.present);const target=history.past.pop();history.future.unshift(current);if(history.future.length>HISTORY_LIMIT)history.future.pop();history.present=target;const restored=target.markers.filter(marker=>!current.markers.some(item=>item.id===marker.id));editor.selectedMarkerId=restored.length===1?restored[0].id:null;render();announce("Ação desfeita.")}
-function redo(){if(!history.future.length){announce("Nada para refazer.",true);return}const current=cloneContent(history.present);const target=history.future.shift();history.past.push(current);if(history.past.length>HISTORY_LIMIT)history.past.shift();history.present=target;const added=target.markers.filter(marker=>!current.markers.some(item=>item.id===marker.id));editor.selectedMarkerId=added.length===1?added[0].id:null;render();announce("Ação refeita.")}
+function undo(){if(!history.past.length){announce("Nada para desfazer.",true);return}labelDraftFor=null;const current=cloneContent(history.present);const target=history.past.pop();history.future.unshift(current);if(history.future.length>HISTORY_LIMIT)history.future.pop();history.present=target;const restored=target.markers.filter(marker=>!current.markers.some(item=>item.id===marker.id));editor.selectedMarkerId=restored.length===1?restored[0].id:null;render();announce("Ação desfeita.")}
+function redo(){if(!history.future.length){announce("Nada para refazer.",true);return}labelDraftFor=null;const current=cloneContent(history.present);const target=history.future.shift();history.past.push(current);if(history.past.length>HISTORY_LIMIT)history.past.shift();history.present=target;const added=target.markers.filter(marker=>!current.markers.some(item=>item.id===marker.id));editor.selectedMarkerId=added.length===1?added[0].id:null;render();announce("Ação refeita.")}
 
 function setActiveType(type){editor.activeMarkerType=type;document.querySelectorAll(".type-button").forEach(button=>button.setAttribute("aria-pressed",String(button.dataset.type===type)))}
 function activatePosition(stringIndex,fret){
+  if(!visiblePositions().includes(fret)){announce("Posição fora da janela visível.",true);return}
   const existing=markerAt(stringIndex,fret);editor.focusedPosition={stringIndex,fret};
-  if(existing){editor.selectedMarkerId=existing.id;editor.activeCustomLabel=existing.customLabel;refs.label.value=existing.customLabel;setActiveType(existing.type);render();announce(`${positionLabel(stringIndex,fret)} selecionado.`);return}
-  let type=editor.activeMarkerType;if(fret===0&&type==="filled")type="outline";
-  if(fret>0&&type==="muted"){announce("Marcador abafado só pode ser usado no nut, casa 0.",true);return}
+  if(existing){editor.selectedMarkerId=existing.id;editor.activeCustomLabel=existing.customLabel;setActiveType(existing.type);render();announce(`${positionLabel(stringIndex,fret)} selecionado.`);return}
+  if(fret>0&&editor.activeMarkerType==="muted"){announce(MUTED_ONLY_AT_NUT,true);return}
+  const type=normalizeType(editor.activeMarkerType,fret);
   const marker={id:`marker-${++markerSequence}`,stringIndex,fret,type,customLabel:normalizeLabel(editor.activeCustomLabel)};
   commitContent(content=>content.markers.push(marker),`${positionLabel(stringIndex,fret)} criado.`,marker.id)
 }
-function editSelected(patch,message){const marker=selectedMarker();if(!marker){announce("Selecione um marcador antes de editar.",true);return}if(patch.type==="muted"&&marker.fret!==0){announce("Marcador abafado só pode ser usado no nut, casa 0.",true);return}commitContent(content=>{const target=content.markers.find(item=>item.id===marker.id);Object.assign(target,patch)},message,marker.id)}
+function editSelected(patch,message){const marker=selectedMarker();if(!marker){announce("Selecione um marcador antes de editar.",true);return}if(patch.type==="muted"&&marker.fret!==0){announce(MUTED_ONLY_AT_NUT,true);return}const safe=patch.type?{...patch,type:normalizeType(patch.type,marker.fret)}:patch;commitContent(content=>{const target=content.markers.find(item=>item.id===marker.id);Object.assign(target,safe)},message,marker.id)}
 function removeSelected(){const marker=selectedMarker();if(!marker){announce("Nenhum marcador selecionado.",true);return}commitContent(content=>{content.markers=content.markers.filter(item=>item.id!==marker.id)},"Marcador removido. Use Desfazer para restaurar.",null)}
-function deselect(){if(!editor.selectedMarkerId)return;editor.selectedMarkerId=null;editor.activeCustomLabel="";refs.label.value="";render();announce("Seleção cancelada.")}
+function deselect(){if(!editor.selectedMarkerId)return;editor.selectedMarkerId=null;editor.activeCustomLabel="";labelDraftFor=null;render();announce("Seleção cancelada.")}
 function clearDiagram(){if(!history.present.markers.length)return;commitContent(content=>{content.markers=[]},"Diagrama limpo. Use Desfazer para restaurar.",null)}
 
 function setStartFret(value,source="control"){
-  const parsed=Number(value);if(!Number.isInteger(parsed)||parsed<0||parsed>MAX_FRET){refs.start.value=String(editor.startFret);refs.startError.textContent="Informe uma casa inteira entre 0 e 24.";refs.start.setAttribute("aria-invalid","true");announce("Casa inicial inválida. O último valor válido foi mantido.",true);return false}
-  editor.startFret=parsed;refs.start.value=String(parsed);refs.startError.textContent="";refs.start.removeAttribute("aria-invalid");
-  const frets=visibleFretNumbers();if(editor.focusedPosition.fret!==0&&!frets.includes(editor.focusedPosition.fret))editor.focusedPosition={stringIndex:editor.focusedPosition.stringIndex,fret:frets[0]||0};
-  render();if(source!=="silent")announce(parsed===0?"Janela iniciada no nut.":`Janela iniciada na casa ${parsed}.`);return true
+  const raw=String(value).trim();const parsed=Number(raw);if(raw===""||!Number.isInteger(parsed)||parsed<0||parsed>MAX_FRET){refs.start.value=String(editor.startFret);refs.startError.textContent="Informe uma casa inteira entre 0 e 24.";refs.start.setAttribute("aria-invalid","true");announce("Casa inicial inválida. O último valor válido foi mantido.",true);return false}
+  const clamped=Math.min(parsed,maxStartFret());
+  editor.startFret=clamped;refs.start.value=String(clamped);refs.startError.textContent="";refs.start.removeAttribute("aria-invalid");
+  const positions=visiblePositions();if(!positions.includes(editor.focusedPosition.fret))editor.focusedPosition={stringIndex:editor.focusedPosition.stringIndex,fret:positions[0]??0};
+  render();
+  if(source!=="silent"){const opening=clamped!==parsed?`Janela ajustada para a casa ${clamped} para manter ${editor.visibleFrets} casas visíveis.`:clamped===0?"Janela iniciada no nut.":`Janela iniciada na casa ${clamped}.`;announce(`${opening}${offscreenSuffix()}`)}
+  return true
 }
 
 function palette(){const styles=getComputedStyle(document.documentElement);return {artboard:styles.getPropertyValue("--color-artboard-bg").trim(),rule:styles.getPropertyValue("--color-artboard-rule").trim(),ink:styles.getPropertyValue("--color-diagram-ink").trim(),string:styles.getPropertyValue("--color-string").trim(),selection:styles.getPropertyValue("--color-selection").trim(),focus:styles.getPropertyValue("--color-focus-artboard").trim(),white:styles.getPropertyValue("--color-white").trim()}}
 function svgNode(tag,attributes={},text=""){const node=document.createElementNS(SVG_NS,tag);Object.entries(attributes).forEach(([name,value])=>node.setAttribute(name,String(value)));if(text)node.textContent=text;return node}
 function append(parent,tag,attributes,text){const node=svgNode(tag,attributes,text);parent.append(node);return node}
-function geometry(){const frets=visibleFretNumbers();const nutX=GEOMETRY.left+GEOMETRY.labelWidth;const fretStart=nutX+GEOMETRY.nutWidth;const gridWidth=GEOMETRY.width-fretStart-GEOMETRY.right;const fretWidth=gridWidth/Math.max(1,frets.length);const rowGap=(GEOMETRY.bottom-GEOMETRY.top)/5;return {frets,nutX,fretStart,gridWidth,fretWidth,rowGap,stringY:index=>GEOMETRY.top+index*rowGap,fretX:index=>fretStart+(index+.5)*fretWidth}}
+function geometry(){const frets=visibleFretNumbers();const nut=nutVisible();const nutWidth=nut?GEOMETRY.nutWidth:0;const nutX=GEOMETRY.left+GEOMETRY.labelWidth;const fretStart=nutX+nutWidth;const gridWidth=GEOMETRY.width-fretStart-GEOMETRY.right;const fretWidth=gridWidth/Math.max(1,frets.length);const rowGap=(GEOMETRY.bottom-GEOMETRY.top)/5;return {frets,nut,nutWidth,nutX,fretStart,gridWidth,fretWidth,rowGap,stringY:index=>GEOMETRY.top+index*rowGap,fretX:index=>fretStart+(index+.5)*fretWidth}}
+/** Coordenada horizontal de uma casa na janela atual, ou null se ela nao estiver visivel. */
+function positionX(geo,fret){if(fret===0)return geo.nut?geo.nutX+geo.nutWidth/2:null;const index=geo.frets.indexOf(fret);return index<0?null:geo.fretX(index)}
 
 function renderSvg(){
   const colors=palette();const geo=geometry();const fontScale=editor.visibleFrets===6?3.1:GEOMETRY.height>440?1.6:1;const root=document.createDocumentFragment();
   refs.svg.setAttribute("viewBox",`0 0 ${GEOMETRY.width} ${GEOMETRY.height}`);
-  append(root,"title",{id:"svg-title"},"Diagrama do braço");append(root,"desc",{id:"svg-description"},`Violão ou guitarra de seis cordas, afinação ${currentTuning().name}, ${geo.frets.length} casas visíveis.`);
+  append(root,"title",{id:"svg-title"},"Diagrama do braço");append(root,"desc",{id:"svg-description"},`Violão ou guitarra de seis cordas, afinação ${currentTuning().name}, casas ${geo.frets[0]} a ${geo.frets.at(-1)}${geo.nut?", a partir do nut":`, ${editor.startFret}ª posição`}.`);
   append(root,"rect",{width:GEOMETRY.width,height:GEOMETRY.height,fill:colors.artboard});
   append(root,"text",{x:GEOMETRY.left,y:38,fill:colors.ink,"font-size":15*fontScale,"font-family":"ui-monospace, monospace","font-weight":700,"letter-spacing":2},"FRETBOARD / 06 STRING");
   append(root,"line",{x1:GEOMETRY.left,y1:55,x2:GEOMETRY.width-GEOMETRY.right,y2:55,stroke:colors.rule,"stroke-width":1});
-  append(root,"rect",{x:geo.nutX,y:GEOMETRY.top-24,width:GEOMETRY.nutWidth,height:GEOMETRY.bottom-GEOMETRY.top+48,fill:colors.rule});
-  append(root,"text",{x:geo.nutX+geo.fretWidth*.0+GEOMETRY.nutWidth/2,y:75,fill:colors.ink,"font-size":11*fontScale,"font-family":"ui-monospace, monospace","text-anchor":"middle"},"NUT");
+  if(geo.nut){
+    append(root,"rect",{x:geo.nutX,y:GEOMETRY.top-24,width:geo.nutWidth,height:GEOMETRY.bottom-GEOMETRY.top+48,fill:colors.rule});
+    append(root,"text",{x:geo.nutX+geo.nutWidth/2,y:75,fill:colors.ink,"font-size":11*fontScale,"font-family":"ui-monospace, monospace","text-anchor":"middle"},"NUT")
+  }else append(root,"text",{x:GEOMETRY.width-GEOMETRY.right,y:38,fill:colors.ink,"font-size":13*fontScale,"font-family":"ui-monospace, monospace","font-weight":700,"letter-spacing":1,"text-anchor":"end"},`${editor.startFret}ª POSIÇÃO`);
   geo.frets.forEach((fret,index)=>{
     const left=geo.fretStart+index*geo.fretWidth;append(root,"rect",{x:left,y:GEOMETRY.top-24,width:geo.fretWidth,height:GEOMETRY.bottom-GEOMETRY.top+48,fill:colors.artboard,stroke:colors.rule,"stroke-width":1});
     append(root,"text",{x:geo.fretX(index),y:75,fill:colors.ink,"font-size":13*fontScale,"font-family":"ui-monospace, monospace","font-weight":700,"text-anchor":"middle"},String(fret));
@@ -310,44 +337,55 @@ function renderSvg(){
   }
   const markerLayer=append(root,"g",{"data-diagram-layer":"markers"});
   history.present.markers.forEach(marker=>{
-    const fretIndex=geo.frets.indexOf(marker.fret);if(marker.fret!==0&&fretIndex<0)return;const x=marker.fret===0?geo.nutX+GEOMETRY.nutWidth/2:geo.fretX(fretIndex);const y=geo.stringY(marker.stringIndex);drawMarker(markerLayer,marker,x,y,colors)
+    const x=positionX(geo,marker.fret);if(x===null)return;drawMarker(markerLayer,marker,x,geo.stringY(marker.stringIndex),colors)
   });
-  const editorLayer=append(root,"g",{"data-editor-layer":"true"});const focus=editor.focusedPosition;const focusIndex=geo.frets.indexOf(focus.fret);
-  if(focus.fret===0||focusIndex>=0){const x=focus.fret===0?geo.nutX+GEOMETRY.nutWidth/2:geo.fretX(focusIndex);const y=geo.stringY(focus.stringIndex);append(editorLayer,"line",{x1:x,y1:GEOMETRY.top-22,x2:x,y2:GEOMETRY.bottom+22,stroke:colors.focus,"stroke-width":1,"stroke-dasharray":"4 5"});append(editorLayer,"line",{x1:geo.nutX-5,y1:y,x2:geo.fretStart+geo.gridWidth,y2:y,stroke:colors.focus,"stroke-width":1,"stroke-dasharray":"4 5"});append(editorLayer,"circle",{cx:x,cy:y,r:24,fill:"none",stroke:colors.focus,"stroke-width":2})}
-  const selected=selectedMarker();if(selected){const selectedIndex=geo.frets.indexOf(selected.fret);if(selected.fret===0||selectedIndex>=0){const x=selected.fret===0?geo.nutX+GEOMETRY.nutWidth/2:geo.fretX(selectedIndex);append(editorLayer,"circle",{cx:x,cy:geo.stringY(selected.stringIndex),r:29,fill:"none",stroke:colors.selection,"stroke-width":3})}}
-  refs.svg.replaceChildren(root)
+  const editorLayer=append(root,"g",{"data-editor-layer":"true"});const focus=editor.focusedPosition;const focusX=positionX(geo,focus.fret);
+  if(focusX!==null){const x=focusX;const y=geo.stringY(focus.stringIndex);append(editorLayer,"line",{x1:x,y1:GEOMETRY.top-22,x2:x,y2:GEOMETRY.bottom+22,stroke:colors.focus,"stroke-width":1,"stroke-dasharray":"4 5"});append(editorLayer,"line",{x1:geo.nutX-5,y1:y,x2:geo.fretStart+geo.gridWidth,y2:y,stroke:colors.focus,"stroke-width":1,"stroke-dasharray":"4 5"});append(editorLayer,"circle",{cx:x,cy:y,r:24,fill:"none",stroke:colors.focus,"stroke-width":2})}
+  const selected=selectedMarker();if(selected){const selectedX=positionX(geo,selected.fret);if(selectedX!==null)append(editorLayer,"circle",{cx:selectedX,cy:geo.stringY(selected.stringIndex),r:29,fill:"none",stroke:colors.selection,"stroke-width":3})}
+  refs.svg.replaceChildren(root);fitMarkerLabels()
 }
 
-function drawMarker(layer,marker,x,y,colors){const scale=editor.visibleFrets===6?2:GEOMETRY.height>440?1.4:1;const radius=18*scale;if(marker.type==="muted"){append(layer,"line",{x1:x-radius*.7,y1:y-radius*.7,x2:x+radius*.7,y2:y+radius*.7,stroke:colors.ink,"stroke-width":4*scale,"stroke-linecap":"round"});append(layer,"line",{x1:x+radius*.7,y1:y-radius*.7,x2:x-radius*.7,y2:y+radius*.7,stroke:colors.ink,"stroke-width":4*scale,"stroke-linecap":"round"});return}const fill=marker.type==="outline"?colors.artboard:colors.selection;const stroke=marker.type==="outline"?colors.ink:colors.white;append(layer,"circle",{cx:x,cy:y,r:radius,fill,stroke,"stroke-width":3*scale});append(layer,"text",{x,y:y+.5,fill:marker.type==="outline"?colors.ink:colors.white,"font-size":11*scale*(GEOMETRY.height>440?1.35:1),"font-family":"ui-monospace, monospace","font-weight":800,"text-anchor":"middle","dominant-baseline":"middle"},displayLabel(marker))}
+function drawMarker(layer,marker,x,y,colors){const scale=editor.visibleFrets===6?2:GEOMETRY.height>440?1.4:1;const radius=18*scale;if(marker.type==="muted"){append(layer,"line",{x1:x-radius*.7,y1:y-radius*.7,x2:x+radius*.7,y2:y+radius*.7,stroke:colors.ink,"stroke-width":4*scale,"stroke-linecap":"round"});append(layer,"line",{x1:x+radius*.7,y1:y-radius*.7,x2:x-radius*.7,y2:y+radius*.7,stroke:colors.ink,"stroke-width":4*scale,"stroke-linecap":"round"});return}const fill=marker.type==="outline"?colors.artboard:colors.selection;const stroke=marker.type==="outline"?colors.ink:colors.white;append(layer,"circle",{cx:x,cy:y,r:radius,fill,stroke,"stroke-width":3*scale});const label=displayLabel(marker);
+// Ate tres caracteres usam o corpo cheio; alem disso a fonte encolhe para caber no disco.
+// O fator 3.2 mantem a largura natural abaixo do orcamento de 1.7 x raio em ui-monospace.
+const fontSize=11*scale*(GEOMETRY.height>440?1.35:1)*Math.min(1,3.2/label.length);
+append(layer,"text",{x,y:y+.5,fill:marker.type==="outline"?colors.ink:colors.white,"font-size":fontSize,"font-family":"ui-monospace, monospace","font-weight":800,"text-anchor":"middle","dominant-baseline":"middle","data-fit":radius*1.7},label)}
+// Rede de seguranca independente das metricas da fonte: condensa o que ainda transbordar.
+function fitMarkerLabels(){refs.svg.querySelectorAll("[data-fit]").forEach(node=>{const budget=Number(node.getAttribute("data-fit"));if(node.getComputedTextLength()>budget){node.setAttribute("textLength",budget);node.setAttribute("lengthAdjust","spacingAndGlyphs")}})}
 
 function renderGrid(){
   const geo=geometry();const focusedKey=`${editor.focusedPosition.stringIndex}:${editor.focusedPosition.fret}`;const fragment=document.createDocumentFragment();
-  for(let stringIndex=0;stringIndex<6;stringIndex+=1){const row=document.createElement("div");row.className="grid-row";row.setAttribute("role","row");[0,...geo.frets].forEach(fret=>{const button=document.createElement("button");button.type="button";button.className="grid-cell";button.setAttribute("role","gridcell");button.dataset.stringIndex=String(stringIndex);button.dataset.fret=String(fret);button.setAttribute("aria-label",positionLabel(stringIndex,fret));const marker=markerAt(stringIndex,fret);button.setAttribute("aria-selected",String(Boolean(marker&&marker.id===editor.selectedMarkerId)));button.tabIndex=`${stringIndex}:${fret}`===focusedKey?0:-1;const index=geo.frets.indexOf(fret);const x=fret===0?geo.nutX+GEOMETRY.nutWidth/2:geo.fretX(index);const width=fret===0?GEOMETRY.nutWidth:geo.fretWidth;const height=Math.max(44,geo.rowGap*.82);button.style.left=`${x/GEOMETRY.width*100}%`;button.style.top=`${geo.stringY(stringIndex)/GEOMETRY.height*100}%`;button.style.width=`${width/GEOMETRY.width*100}%`;button.style.height=`${height/GEOMETRY.height*100}%`;button.addEventListener("click",()=>activatePosition(stringIndex,fret));button.addEventListener("focus",()=>{editor.focusedPosition={stringIndex,fret};renderSvg()});button.addEventListener("keydown",handleGridKey);row.append(button)});fragment.append(row)}
+  for(let stringIndex=0;stringIndex<6;stringIndex+=1){const row=document.createElement("div");row.className="grid-row";row.setAttribute("role","row");visiblePositions().forEach(fret=>{const button=document.createElement("button");button.type="button";button.className="grid-cell";button.setAttribute("role","gridcell");button.dataset.stringIndex=String(stringIndex);button.dataset.fret=String(fret);button.setAttribute("aria-label",positionLabel(stringIndex,fret));const marker=markerAt(stringIndex,fret);button.setAttribute("aria-selected",String(Boolean(marker&&marker.id===editor.selectedMarkerId)));button.tabIndex=`${stringIndex}:${fret}`===focusedKey?0:-1;const x=positionX(geo,fret);const width=fret===0?geo.nutWidth:geo.fretWidth;const height=Math.max(44,geo.rowGap*.82);button.style.left=`${x/GEOMETRY.width*100}%`;button.style.top=`${geo.stringY(stringIndex)/GEOMETRY.height*100}%`;button.style.width=`${width/GEOMETRY.width*100}%`;button.style.height=`${height/GEOMETRY.height*100}%`;button.addEventListener("click",()=>activatePosition(stringIndex,fret));button.addEventListener("focus",()=>{editor.focusedPosition={stringIndex,fret};renderSvg()});button.addEventListener("keydown",handleGridKey);row.append(button)});fragment.append(row)}
   refs.grid.replaceChildren(fragment)
 }
-function handleGridKey(event){const stringIndex=Number(event.currentTarget.dataset.stringIndex);const fret=Number(event.currentTarget.dataset.fret);const columns=[0,...visibleFretNumbers()];let row=stringIndex;let column=columns.indexOf(fret);if(event.key==="ArrowLeft")column=Math.max(0,column-1);else if(event.key==="ArrowRight")column=Math.min(columns.length-1,column+1);else if(event.key==="ArrowUp")row=Math.max(0,row-1);else if(event.key==="ArrowDown")row=Math.min(5,row+1);else if(event.key==="Home")column=0;else if(event.key==="End")column=columns.length-1;else return;event.preventDefault();const target=refs.grid.querySelector(`[data-string-index="${row}"][data-fret="${columns[column]}"]`);if(target){editor.focusedPosition={stringIndex:row,fret:columns[column]};target.focus()}}
+function handleGridKey(event){const stringIndex=Number(event.currentTarget.dataset.stringIndex);const fret=Number(event.currentTarget.dataset.fret);const columns=visiblePositions();let row=stringIndex;let column=columns.indexOf(fret);if(event.key==="ArrowLeft")column=Math.max(0,column-1);else if(event.key==="ArrowRight")column=Math.min(columns.length-1,column+1);else if(event.key==="ArrowUp")row=Math.max(0,row-1);else if(event.key==="ArrowDown")row=Math.min(5,row+1);else if(event.key==="Home")column=0;else if(event.key==="End")column=columns.length-1;else return;event.preventDefault();const target=refs.grid.querySelector(`[data-string-index="${row}"][data-fret="${columns[column]}"]`);if(target){editor.focusedPosition={stringIndex:row,fret:columns[column]};target.focus()}}
 
+function mirrorLabel(value){if(refs.label.value!==value)refs.label.value=value}
 function renderInspector(){
-  const marker=selectedMarker();refs.remove.disabled=!marker;refs.deselect.disabled=!marker;refs.clear.disabled=!history.present.markers.length;refs.undo.disabled=!history.past.length;refs.redo.disabled=!history.future.length;refs.previous.disabled=editor.startFret===0;refs.next.disabled=editor.startFret===MAX_FRET;
-  if(marker){const note=noteAt(marker.stringIndex,marker.fret);editor.activeCustomLabel=marker.customLabel;setActiveType(marker.type);refs.badge.textContent=displayLabel(marker);refs.kicker.textContent=`Nota ${spokenNote(note)}`;refs.selectionName.textContent=`Corda ${marker.stringIndex+1} · ${marker.fret===0?"nut":`casa ${marker.fret}`}`;refs.coordinate.textContent=`S${marker.stringIndex+1} / F${String(marker.fret).padStart(2,"0")}`;refs.label.value=marker.customLabel}else{refs.badge.textContent="—";refs.kicker.textContent="Nenhum marcador";refs.selectionName.textContent="Escolha uma posição";refs.coordinate.textContent="—"}
-  const frets=visibleFretNumbers();refs.readout.textContent=frets.length?`${editor.startFret===0?"NUT + ":""}${String(frets[0]).padStart(2,"0")}—${String(frets.at(-1)).padStart(2,"0")}`:"NUT";refs.tuning.value=history.present.tuningPresetId
+  const marker=selectedMarker();refs.remove.disabled=!marker;refs.deselect.disabled=!marker;refs.clear.disabled=!history.present.markers.length;refs.undo.disabled=!history.past.length;refs.redo.disabled=!history.future.length;refs.previous.disabled=editor.startFret===0;refs.next.disabled=editor.startFret>=maxStartFret();
+  if(marker){const note=noteAt(marker.stringIndex,marker.fret);const shown=displayLabel(marker);editor.activeCustomLabel=marker.customLabel;setActiveType(marker.type);refs.badge.textContent=shown;refs.badge.dataset.long=String(shown.length>3);refs.kicker.textContent=marker.customLabel?`Rótulo ${marker.customLabel} · nota ${spokenNote(note)}`:`Nota ${spokenNote(note)}`;refs.selectionName.textContent=`Corda ${marker.stringIndex+1} · ${marker.fret===0?"nut":`casa ${marker.fret}`}`;refs.coordinate.textContent=`S${marker.stringIndex+1} / F${String(marker.fret).padStart(2,"0")}`;mirrorLabel(marker.customLabel)}else{refs.badge.textContent="—";refs.badge.dataset.long="false";refs.kicker.textContent="Nenhum marcador";refs.selectionName.textContent="Escolha uma posição";refs.coordinate.textContent="—";mirrorLabel(editor.activeCustomLabel)}
+  const frets=visibleFretNumbers();refs.readout.textContent=frets.length?`${nutVisible()?"NUT + ":""}${String(frets[0]).padStart(2,"0")}—${String(frets.at(-1)).padStart(2,"0")}`:"NUT";refs.tuning.value=history.present.tuningPresetId;
+  const notice=offscreenNotice();refs.hint.textContent=notice||"Nota calculada pela afinação";refs.hint.classList.toggle("offscreen",Boolean(notice))
 }
 function render(){const restoreGridFocus=document.activeElement?.classList.contains("grid-cell");keepSelectionValid();renderSvg();renderGrid();renderInspector();if(restoreGridFocus){const {stringIndex,fret}=editor.focusedPosition;refs.grid.querySelector(`[data-string-index="${stringIndex}"][data-fret="${fret}"]`)?.focus({preventScroll:true})}}
 
 refs.tuning.addEventListener("change",event=>{const id=event.target.value;if(!TUNINGS[id]){announce("Afinação inválida. Nenhuma alteração foi aplicada.",true);refs.tuning.value=history.present.tuningPresetId;return}commitContent(content=>{content.tuningPresetId=id},`Afinação alterada para ${TUNINGS[id].name}.`,editor.selectedMarkerId)});
 refs.start.addEventListener("input",event=>setStartFret(event.target.value));refs.previous.addEventListener("click",()=>setStartFret(editor.startFret-1));refs.next.addEventListener("click",()=>setStartFret(editor.startFret+1));
 refs.undo.addEventListener("click",undo);refs.redo.addEventListener("click",redo);refs.clear.addEventListener("click",clearDiagram);refs.remove.addEventListener("click",removeSelected);refs.deselect.addEventListener("click",deselect);
-document.querySelectorAll(".type-button").forEach(button=>button.addEventListener("click",()=>{const type=button.dataset.type;const marker=selectedMarker();if(marker){if(type==="muted"&&marker.fret!==0){announce("Marcador abafado só pode ser usado no nut, casa 0.",true);return}setActiveType(type);editSelected({type},`Marcador alterado para ${TYPE_NAMES[type]}.`)}else{setActiveType(type);announce(`Ferramenta ${TYPE_NAMES[type]} ativa.`)}}));
-refs.label.addEventListener("input",event=>{const clean=normalizeLabel(event.target.value);editor.activeCustomLabel=clean;if(event.target.value!==clean)event.target.value=clean;const marker=selectedMarker();if(marker&&marker.customLabel!==clean)editSelected({customLabel:clean},clean?`Rótulo alterado para ${clean}.`:"Rótulo automático restaurado.")});
+// A ferramenta sempre adota o tipo pedido, mesmo quando a edicao da selecao e recusada ou
+// normalizada; so o marcador fica sujeito aos invariantes do nut.
+document.querySelectorAll(".type-button").forEach(button=>button.addEventListener("click",()=>{const requested=button.dataset.type;const marker=selectedMarker();setActiveType(requested);if(!marker){announce(`Ferramenta ${TYPE_NAMES[requested]} ativa.`);return}if(requested==="muted"&&marker.fret!==0){announce(`${MUTED_ONLY_AT_NUT} Ferramenta abafado ativa para o próximo marcador.`,true);return}const type=normalizeType(requested,marker.fret);if(type!==requested){announce(FILLED_NORMALIZED_AT_NUT);if(marker.type===type){setActiveType(type);return}}editSelected({type},`Marcador alterado para ${TYPE_NAMES[type]}.`)}));
+refs.label.addEventListener("input",event=>{const clean=normalizeLabel(event.target.value);editor.activeCustomLabel=clean;if(event.target.value!==clean)event.target.value=clean;const marker=selectedMarker();if(!marker||marker.customLabel===clean)return;const message=clean?`Rótulo alterado para ${clean}.`:"Rótulo automático restaurado.";if(labelDraftFor===marker.id){history.present.markers.find(item=>item.id===marker.id).customLabel=clean;render();announce(message);return}editSelected({customLabel:clean},message);labelDraftFor=marker.id});
+refs.label.addEventListener("blur",()=>{labelDraftFor=null});
 
 document.addEventListener("keydown",event=>{const editable=event.target instanceof HTMLInputElement||event.target instanceof HTMLSelectElement;if((event.metaKey||event.ctrlKey)&&event.key.toLowerCase()==="z"){event.preventDefault();event.shiftKey?redo():undo();return}if(editable)return;if(event.key==="Escape"){event.preventDefault();deselect()}else if((event.key==="Delete"||event.key==="Backspace")&&selectedMarker()){event.preventDefault();removeSelected()}});
 function updateResponsiveGeometry(){editor.visibleFrets=compactMedia.matches?6:12;Object.assign(GEOMETRY,compactMedia.matches||touchMedia.matches?expandedGeometry:desktopGeometry);setStartFret(editor.startFret,"silent")}
 compactMedia.addEventListener("change",updateResponsiveGeometry);touchMedia.addEventListener("change",updateResponsiveGeometry);
 
-function exportedSvgMarkup(){const clone=refs.svg.cloneNode(true);clone.querySelectorAll("[data-editor-layer]").forEach(node=>node.remove());clone.removeAttribute("role");clone.removeAttribute("aria-labelledby");clone.setAttribute("xmlns",SVG_NS);clone.setAttribute("width",String(GEOMETRY.width));clone.setAttribute("height",String(GEOMETRY.height));return new XMLSerializer().serializeToString(clone)}
+function exportedSvgMarkup(){const clone=refs.svg.cloneNode(true);clone.querySelectorAll("[data-editor-layer]").forEach(node=>node.remove());clone.querySelectorAll("[data-fit]").forEach(node=>node.removeAttribute("data-fit"));clone.removeAttribute("role");clone.removeAttribute("aria-labelledby");clone.setAttribute("xmlns",SVG_NS);clone.setAttribute("width",String(GEOMETRY.width));clone.setAttribute("height",String(GEOMETRY.height));return new XMLSerializer().serializeToString(clone)}
 function triggerDownload(blob,fileName){let url="";try{url=URL.createObjectURL(blob);const link=document.createElement("a");link.href=url;link.download=fileName;document.body.append(link);link.click();link.remove()}finally{if(url)window.setTimeout(()=>URL.revokeObjectURL(url),0)}}
-function downloadSvg(){try{triggerDownload(new Blob([exportedSvgMarkup()],{type:"image/svg+xml;charset=utf-8"}),"diagrama-braco.svg");announce("SVG preparado para download.")}catch(error){announce("Não foi possível gerar o SVG. Tente novamente.",true)}}
-function downloadPng(){let sourceUrl="";try{sourceUrl=URL.createObjectURL(new Blob([exportedSvgMarkup()],{type:"image/svg+xml;charset=utf-8"}));const image=new Image();image.onload=()=>{try{const scale=2;const canvas=document.createElement("canvas");canvas.width=GEOMETRY.width*scale;canvas.height=GEOMETRY.height*scale;const context=canvas.getContext("2d");if(!context)throw new Error("Canvas indisponível");context.drawImage(image,0,0,canvas.width,canvas.height);canvas.toBlob(blob=>{if(!blob){announce("Não foi possível gerar o PNG. Tente novamente.",true);return}try{triggerDownload(blob,"diagrama-braco.png");announce("PNG preparado para download.")}catch(error){announce("Não foi possível baixar o PNG. Tente novamente.",true)}},"image/png")}catch(error){announce("Não foi possível gerar o PNG. Tente novamente.",true)}finally{URL.revokeObjectURL(sourceUrl)}};image.onerror=()=>{URL.revokeObjectURL(sourceUrl);announce("Não foi possível rasterizar o diagrama. Tente novamente.",true)};image.src=sourceUrl}catch(error){if(sourceUrl)URL.revokeObjectURL(sourceUrl);announce("Não foi possível gerar o PNG. Tente novamente.",true)}}
+function downloadSvg(){try{triggerDownload(new Blob([exportedSvgMarkup()],{type:"image/svg+xml;charset=utf-8"}),"diagrama-braco.svg");announce(`SVG preparado para download.${exportWarning()}`)}catch(error){announce("Não foi possível gerar o SVG. Tente novamente.",true)}}
+function downloadPng(){let sourceUrl="";try{sourceUrl=URL.createObjectURL(new Blob([exportedSvgMarkup()],{type:"image/svg+xml;charset=utf-8"}));const image=new Image();image.onload=()=>{try{const scale=2;const canvas=document.createElement("canvas");canvas.width=GEOMETRY.width*scale;canvas.height=GEOMETRY.height*scale;const context=canvas.getContext("2d");if(!context)throw new Error("Canvas indisponível");context.drawImage(image,0,0,canvas.width,canvas.height);canvas.toBlob(blob=>{if(!blob){announce("Não foi possível gerar o PNG. Tente novamente.",true);return}try{triggerDownload(blob,"diagrama-braco.png");announce(`PNG preparado para download.${exportWarning()}`)}catch(error){announce("Não foi possível baixar o PNG. Tente novamente.",true)}},"image/png")}catch(error){announce("Não foi possível gerar o PNG. Tente novamente.",true)}finally{URL.revokeObjectURL(sourceUrl)}};image.onerror=()=>{URL.revokeObjectURL(sourceUrl);announce("Não foi possível rasterizar o diagrama. Tente novamente.",true)};image.src=sourceUrl}catch(error){if(sourceUrl)URL.revokeObjectURL(sourceUrl);announce("Não foi possível gerar o PNG. Tente novamente.",true)}}
 refs.exportSvg.addEventListener("click",downloadSvg);refs.exportPng.addEventListener("click",downloadPng);
 
 function benchmarkRender(){const samples=[];for(let index=0;index<110;index+=1){const start=performance.now();render();if(index>=10)samples.push(performance.now()-start)}samples.sort((a,b)=>a-b);return samples[Math.ceil(samples.length*.95)-1]}
