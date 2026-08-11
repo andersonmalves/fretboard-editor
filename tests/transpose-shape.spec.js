@@ -210,6 +210,9 @@ test.describe("Transpor forma", () => {
     expect(state.editor.selectedMarkerId).toBe(selectedId);
     expect(state.editor.linkFrom).toBeNull();
     expect(await fretboard.markerAt(1, 4)).not.toBeNull();
+    await expect(fretboard.coordinate).toHaveText("—");
+
+    await fretboard.pickWorkTool("marker");
     await expect(fretboard.coordinate).toHaveText("S1 / F04");
   });
 });

@@ -10,7 +10,7 @@ backend ou serviço externo.
 - Afinações Padrão, Drop D, Eb padrão, Open G e Open C.
 - Notas automáticas com sustenidos ou bemóis conforme a afinação.
 - Marcadores preenchidos, vazados e abafados.
-- Seleção, edição de rótulo e remoção individual.
+- Dock contextual com preview, edição de marcador e fluxo guiado de ligações.
 - Histórico em memória com desfazer e refazer, limitado a 50 estados.
 - Exportação client-side para SVG, PNG e JSON.
 - Importação de diagramas a partir de arquivo JSON.
@@ -36,9 +36,9 @@ usado nas validações e evita diferenças de segurança entre navegadores para 
 
 1. Escolha uma afinação.
 2. Informe a casa inicial ou use as setas anterior e próxima.
-3. Escolha o tipo de marcador no inspetor.
+3. No dock **Ferramentas**, escolha o modo **Marcar**, o estilo, a cor e o rótulo opcional.
 4. Ative uma posição do braço para criar o marcador.
-5. Selecione um marcador existente para alterar tipo ou rótulo.
+5. Selecione um marcador existente para editá-lo; use **Ligar** para escolher origem e destino.
 6. Use **Baixar SVG**, **Baixar PNG** ou **Baixar JSON** para exportar a prancha visível (SVG/PNG) ou o diagrama completo (JSON).
 7. Use **Importar JSON** para carregar um diagrama salvo; a importação substitui o conteúdo atual e pode ser desfeita.
 

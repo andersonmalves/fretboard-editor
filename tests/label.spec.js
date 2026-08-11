@@ -170,14 +170,16 @@ test.describe("Rotulo customizado", () => {
     await expect(fretboard.cell(3, 5)).toHaveAttribute("aria-label", /marcador preenchido$/);
   });
 
-  test("o inspetor anuncia o rotulo junto da nota", async ({ fretboard }) => {
+  test("o preview combina o rótulo com a nota da posição", async ({ fretboard }) => {
     await fretboard.pickTool("filled");
     await fretboard.activate(3, 5);
-    await expect(fretboard.kicker).toHaveText("Nota Dó 4");
+    await expect(fretboard.selectionName).toContainText("nota C");
 
     await fretboard.setLabel("R5");
 
-    await expect(fretboard.kicker).toHaveText("Rótulo R5 · nota Dó 4");
+    await expect(fretboard.badge).toHaveText("R5");
+    await expect(fretboard.selectionName).toContainText("nota C");
+    await expect(fretboard.labelCount).toHaveText("2/6");
   });
 
   test("selecionar um marcador traz o rotulo dele para o campo", async ({ fretboard }) => {

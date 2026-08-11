@@ -151,10 +151,10 @@ contrato de interação do protótipo.
   seleção/ação primária; latão discreto nas cordas.
 - **Type:** stack nativa de UI para legibilidade e ausência de dependência; `ui-monospace` para
   notas, casas e coordenadas musicais.
-- **Layout:** command bar curta, artboard dominante e inspetor contextual persistente no desktop;
-  inspetor abaixo do braço no mobile.
-- **Signature:** régua de coordenadas musicais — a posição selecionada conecta visualmente corda,
-  casa e nota por crosshair e uma faixa contextual.
+- **Layout:** command bar curta, artboard dominante e dock contextual de 320 px no desktop;
+  dock abaixo do braço no mobile.
+- **Signature:** preview vivo do marcador — estilo, cor e rótulo do próximo marcador ou da seleção
+  usam a mesma linguagem visual do braço.
 
 ### Comparação de layout
 
@@ -162,9 +162,9 @@ contrato de interação do protótipo.
 Opção A — escolhida (desktop)
 ┌ Command bar: Afinação · Posição · Undo/Redo · Exportar ┐
 ├───────────────────────────────────────┬─────────────────┤
-│ Artboard / braço                      │ Seleção         │
-│ posição ativa com crosshair           │ nota, tipo,     │
-│                                       │ rótulo, remover │
+│ Artboard / braço                      │ Ferramentas     │
+│ posição ativa com crosshair           │ Marcar / Ligar  │
+│                                       │ preview e edição│
 └───────────────────────────────────────┴─────────────────┘
 
 Opção B — rejeitada
@@ -175,6 +175,9 @@ Opção B — rejeitada
 
 A opção A preserva contexto de seleção e separa configuração do diagrama, edição do marcador e
 ações globais. No mobile, o artboard ocupa a largura disponível e o inspetor vira painel inferior.
+O dock separa os modos `Marcar` e `Ligar`; criação e edição são estados automáticos. Estilo e rótulo
+somem durante a ligação, que orienta origem e destino. Ações e ligações aparecem somente quando há
+contexto, enquanto atalhos permanecem recolhidos.
 
 ### Crítica do plano — passe 2
 
@@ -448,8 +451,10 @@ Marcação: `[x]` = implementado e/ou coberto por teste automatizado. Itens manu
 - [x] AC-40: Remover marcador ou limpar o diagrama remove ligações associadas; exportação SVG/PNG
   reproduz ligações visíveis sem affordances de edição.
 - [x] AC-41: Com marcador selecionado, o inspetor lista ligações incidentes com remoção individual.
+- [x] AC-42: O dock separa modo e estilo, distingue próximo marcador de edição, mostra preview vivo,
+  nome da cor e contador do rótulo; no modo Ligar orienta origem/destino e oculta campos irrelevantes.
 - [x] AC-32: A aplicação não faz requisições de rede em runtime e `wc -c index.html` retorna no
-  máximo 59.392 bytes ([ADR 002](../adr/002-budget-bytes-transpor-forma.md)).
+  máximo 73.728 bytes ([ADR 006](../adr/006-budget-bytes-selection-controls.md)).
 - [x] AC-33: Com reduced motion ativo, nenhuma transição ou animação não essencial permanece.
 - [x] AC-34: Labels com `<>&"'`, whitespace e caracteres de controle são normalizados/rejeitados
   conforme o data model e nunca criam markup, atributos ou URLs.

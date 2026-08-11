@@ -7,7 +7,7 @@ test.describe("Modelo musical", () => {
 
     expect(await fretboard.drawnMarkerLabels()).toEqual(["G"]);
     await expect(fretboard.badge).toHaveText("G");
-    await expect(fretboard.selectionName).toHaveText("Corda 6 · casa 3");
+    await expect(fretboard.selectionName).toHaveText("Corda 6 · casa 3 · nota G");
   });
 
   test("AC-24: corda 1 e a mais aguda no topo e corda 6 a mais grave na base", async ({ fretboard }) => {

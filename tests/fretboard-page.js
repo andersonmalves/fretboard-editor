@@ -42,16 +42,21 @@ class FretboardPage {
     this.coordinate = page.locator("#selection-coordinate");
     this.selectionName = page.locator("#selection-name");
     this.hint = page.locator("#board-hint");
-    this.toolHint = page.locator("#tool-hint");
     this.windowMap = page.locator("#window-map");
     this.mobileQuick = page.locator(".mobile-quick");
     this.mobileSwatch = page.locator("#mobile-color-swatch");
     this.kicker = page.locator("#selection-kicker");
     this.colorGroup = page.locator("#color-group");
+    this.colorName = page.locator("#color-name");
+    this.labelCount = page.locator("#label-count");
     this.diagramTitle = page.locator("#diagram-title");
     this.connectionField = page.locator("#connection-field");
     this.connectionList = page.locator("#connection-list");
     this.markerToolBar = page.locator("#marker-tool-bar");
+    this.modeGroup = page.locator(".mode-group");
+    this.markerFields = page.locator("#marker-fields");
+    this.inspectorActions = page.locator("#inspector-actions");
+    this.shortcuts = page.locator(".shortcut-disclosure");
     this.consoleErrors = [];
   }
 
@@ -108,7 +113,7 @@ class FretboardPage {
   }
 
   workToolButton(tool) {
-    return this.markerToolBar.locator(`.tool-bar-button[data-tool="${tool}"]`);
+    return this.modeGroup.locator(`.tool-bar-button[data-tool="${tool}"]`);
   }
 
   async openExportMenu() {

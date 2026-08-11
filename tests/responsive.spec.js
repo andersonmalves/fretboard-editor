@@ -79,6 +79,8 @@ test.describe("AC-11: janela de casas por viewport", () => {
       const inspetor = await fretboard.page.locator(".inspector").boundingBox();
 
       expect(inspetor.x).toBeGreaterThan(prancha.x + prancha.width - 1);
+      expect(inspetor.width).toBeGreaterThanOrEqual(319);
+      expect(inspetor.width).toBeLessThanOrEqual(321);
     });
   });
 });
@@ -99,12 +101,18 @@ test.describe("AC-12: alvos de toque", () => {
       "#redo-button",
       "#clear-button",
       "#export-menu-toggle",
-      "#remove-button",
-      "#deselect-button",
+      '.mode-group .tool-bar-button[data-tool="marker"]',
       '#marker-tool-bar .tool-bar-button[data-type="filled"]'
     ];
 
     for (const seletor of seletores) {
+      const caixa = await fretboard.page.locator(seletor).boundingBox();
+      expect(caixa.width, `${seletor} largura`).toBeGreaterThanOrEqual(43.5);
+      expect(caixa.height, `${seletor} altura`).toBeGreaterThanOrEqual(43.5);
+    }
+
+    await fretboard.activate(3, 4);
+    for (const seletor of ["#remove-button", "#deselect-button"]) {
       const caixa = await fretboard.page.locator(seletor).boundingBox();
       expect(caixa.width, `${seletor} largura`).toBeGreaterThanOrEqual(43.5);
       expect(caixa.height, `${seletor} altura`).toBeGreaterThanOrEqual(43.5);

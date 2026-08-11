@@ -22,6 +22,7 @@ test.describe("Cor do marcador", () => {
 
     expect((await fretboard.markerAt(3, 4)).color).toBe("--color-marker-green");
     await expect(fretboard.status).toContainText("alterada para verde");
+    await expect(fretboard.colorName).toHaveText("Verde");
   });
 
   test("AC-37: cor aparece no SVG exportado", async ({ fretboard }) => {
@@ -111,6 +112,7 @@ test.describe("Cor do marcador", () => {
     expect(new Set(boxes.map(({ x }) => Math.round(x))).size).toBe(4);
     expect(new Set(boxes.map(({ y }) => Math.round(y))).size).toBe(2);
     await fretboard.colorSwatch("Azul").click();
+    await expect(fretboard.colorName).toHaveText("Azul");
     const check = await fretboard
       .colorSwatch("Azul")
       .evaluate((swatch) => getComputedStyle(swatch, ":after").content);

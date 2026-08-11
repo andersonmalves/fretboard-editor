@@ -33,6 +33,7 @@ test.describe("Ligacoes entre marcadores", () => {
     await fretboard.activate(5, 6);
     await fretboard.connectMarkers(1, 4, 5, 6);
 
+    await fretboard.pickWorkTool("marker");
     await fretboard.activate(1, 4);
     await fretboard.remove.click();
 
@@ -78,9 +79,12 @@ test.describe("Ligacoes entre marcadores", () => {
     await fretboard.connectMarkers(1, 4, 5, 6);
     await fretboard.connectMarkers(1, 4, 6, 4);
 
+    await fretboard.pickWorkTool("marker");
     await fretboard.activate(1, 4);
     await expect(fretboard.connectionField).toBeVisible();
     await expect(fretboard.connectionList.locator(".connection-item")).toHaveCount(2);
+    await expect(fretboard.connectionField.locator("summary")).toHaveText("Ligações (2)");
+    await fretboard.connectionField.locator("summary").click();
 
     await fretboard.connectionList.locator(".connection-remove").first().click();
 
@@ -96,6 +100,21 @@ test.describe("Ligacoes entre marcadores", () => {
 
     expect(await fretboard.connections()).toHaveLength(0);
     await expect(fretboard.status).toContainText("Selecione um marcador");
+  });
+
+  test("modo ligar orienta origem e destino", async ({ fretboard }) => {
+    await fretboard.activate(1, 4);
+    await fretboard.pickWorkTool("connect");
+
+    await expect(fretboard.kicker).toHaveText("Ligação ativa");
+    await expect(fretboard.badge).toHaveText("1");
+    await expect(fretboard.selectionName).toHaveText("1 de 2 · selecione a origem");
+
+    await fretboard.activate(1, 4);
+
+    await expect(fretboard.badge).toHaveText("2");
+    await expect(fretboard.selectionName).toHaveText("2 de 2 · escolha o destino");
+    await expect(fretboard.deselect).toHaveText("Cancelar ligação");
   });
 
   test("export SVG inclui ligacoes e omite highlight de origem", async ({ fretboard }) => {

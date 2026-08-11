@@ -46,9 +46,9 @@ test.describe("Minimap da janela e afinação", () => {
 test.describe("Barra rápida mobile", () => {
   test.use({ viewport: { width: 390, height: 844 } });
 
-  test("mostra ferramentas Marcador e Ligar acima do braço", async ({ fretboard }) => {
+  test("mostra os modos Marcar e Ligar acima do braço", async ({ fretboard }) => {
     await expect(fretboard.mobileQuick).toBeVisible();
-    await expect(fretboard.mobileQuick.locator('.tool-bar-button[data-type="filled"]')).toBeVisible();
+    await expect(fretboard.mobileQuick.locator('.tool-bar-button[data-tool="marker"]')).toBeVisible();
     await expect(fretboard.mobileQuick.locator('.tool-bar-button[data-tool="connect"]')).toBeVisible();
   });
 
