@@ -34,7 +34,7 @@ test.describe("Pan horizontal da janela do braço", () => {
   });
 
   test("AC-P4: a grade declara arraste horizontal", async ({ fretboard }) => {
-    await expect(fretboard.grid).toHaveAttribute("aria-label", /arraste/i);
+    await expect(fretboard.grid).toHaveAttribute("aria-label", /arraste horizontal/i);
   });
 });
 

@@ -88,7 +88,8 @@ h1{margin:0;font-size:clamp(1.35rem,2.2vw,2rem);font-weight:680;letter-spacing:-
 .panel-title{margin:0;font-size:.8rem;font-weight:720;letter-spacing:.08em;text-transform:uppercase}
 .window-readout{color:var(--color-text-muted);font:600 .75rem/1.3 ui-monospace,SFMono-Regular,Consolas,monospace}
 .artboard-pad{padding:clamp(10px,2vw,24px);background:var(--color-panel-raised)}
-.board-canvas{position:relative;width:100%;aspect-ratio:1200/440;background:var(--color-artboard-bg);border-radius:var(--radius-sm);overflow:hidden;box-shadow:0 8px 20px var(--color-shadow);touch-action:pan-y}
+.board-canvas{position:relative;width:100%;aspect-ratio:1200/440;background:var(--color-artboard-bg);border-radius:var(--radius-sm);overflow:hidden;box-shadow:0 8px 20px var(--color-shadow);touch-action:pan-y;cursor:grab}
+.board-canvas.is-panning,.board-canvas.is-panning .grid-cell{cursor:grabbing}
 #fretboard-svg,.hit-grid{position:absolute;inset:0;width:100%;height:100%}
 #fretboard-svg{display:block}
 .hit-grid{z-index:2}
@@ -208,9 +209,9 @@ kbd{display:inline-block;min-width:25px;padding:2px 5px;border:1px solid var(--c
       <div class="artboard-pad">
         <div class="board-canvas" id="board-canvas">
           <svg id="fretboard-svg" viewBox="0 0 1200 440" role="img" aria-labelledby="svg-title svg-description"></svg>
-          <div class="hit-grid" id="fretboard-grid" role="grid" aria-label="Posições do braço. Arraste, setas ou Enter/Espaço."></div>
+          <div class="hit-grid" id="fretboard-grid" role="grid" aria-label="Posições do braço. Arraste horizontalmente para mover a janela de casas; setas e Enter ou Espaço para navegar."></div>
         </div>
-        <div class="board-caption"><span id="board-caption-primary">Corda 1 no topo · corda 6 na base</span><span id="board-hint">Nota calculada pela afinação</span></div>
+        <div class="board-caption"><span id="board-caption-primary">Corda 1 no topo · corda 6 na base</span><span id="board-hint">Arraste horizontalmente para mover a janela · nota pela afinação</span></div>
       </div>
     </section>
 
@@ -244,7 +245,7 @@ kbd{display:inline-block;min-width:25px;padding:2px 5px;border:1px solid var(--c
           <button class="button danger" id="remove-button" type="button" disabled>Remover</button>
           <button class="button" id="deselect-button" type="button" disabled>Desmarcar</button>
         </div>
-        <dl class="shortcut-list"><dt><kbd>↑↓←→</kbd></dt><dd>Navegar</dd><dt><kbd>Enter</kbd></dt><dd>Criar ou selecionar</dd><dt><kbd>Delete</kbd></dt><dd>Remover seleção</dd><dt><kbd>Esc</kbd></dt><dd>Desmarcar</dd></dl>
+        <dl class="shortcut-list"><dt><kbd>↑↓←→</kbd></dt><dd>Navegar</dd><dt>Arrastar</dt><dd>Mover janela</dd><dt><kbd>Enter</kbd></dt><dd>Criar ou selecionar</dd><dt><kbd>Delete</kbd></dt><dd>Remover seleção</dd><dt><kbd>Esc</kbd></dt><dd>Desmarcar</dd></dl>
       </div>
     </aside>
   </div>
@@ -397,7 +398,7 @@ function setStartFret(value,source="control"){
   if(source!=="silent"){const opening=clamped!==parsed?`Janela ajustada para a casa ${clamped} para manter ${editor.visibleFrets} casas visíveis.`:clamped===0?"Janela iniciada no nut.":`Janela iniciada na casa ${clamped}.`;announce(`${opening}${offscreenSuffix()}`)}
   return true
 }
-function endPan(e){if(!pan||pan.id!==e.pointerId)return;const a=pan.a;try{cv.releasePointerCapture(e.pointerId)}catch{}pan=null;if(a){skip=1;setStartFret(editor.startFret)}}
+function endPan(e){if(!pan||pan.id!==e.pointerId)return;const moved=pan.a,from=pan.s;try{cv.releasePointerCapture(e.pointerId)}catch{}pan=null;cv.classList.remove("is-panning");if(moved){skip=1;if(editor.startFret!==from)setStartFret(editor.startFret)}}
 
 function palette(){const styles=getComputedStyle(document.documentElement);return {artboard:styles.getPropertyValue("--color-artboard-bg").trim(),rule:styles.getPropertyValue("--color-artboard-rule").trim(),ink:styles.getPropertyValue("--color-diagram-ink").trim(),string:styles.getPropertyValue("--color-string").trim(),selection:styles.getPropertyValue("--color-selection").trim(),focus:styles.getPropertyValue("--color-focus-artboard").trim(),white:styles.getPropertyValue("--color-white").trim()}}
 function cssTokenColor(token){return getComputedStyle(document.documentElement).getPropertyValue(token).trim()}
@@ -463,12 +464,12 @@ function renderInspector(){
   if(editor.activeTool==="connect")syncColorSwatches(editor.activeConnectionColor);
   renderConnectionList(marker);
   const frets=visibleFretNumbers();refs.readout.textContent=frets.length?`${nutVisible()?"NUT + ":""}${String(frets[0]).padStart(2,"0")}—${String(frets.at(-1)).padStart(2,"0")}`:"NUT";refs.tuning.value=history.present.tuningPresetId;
-  const notice=offscreenNotice();refs.hint.textContent=notice||"Nota calculada pela afinação";refs.hint.classList.toggle("offscreen",Boolean(notice));mirrorDiagramTitle(displayedDiagramTitle())
+  const notice=offscreenNotice();refs.hint.textContent=notice||"Arraste horizontalmente para mover a janela · nota pela afinação";refs.hint.classList.toggle("offscreen",Boolean(notice));mirrorDiagramTitle(displayedDiagramTitle())
 }
 function render(){const restoreGridFocus=document.activeElement?.classList.contains("grid-cell");keepSelectionValid();renderSvg();renderGrid();renderInspector();if(restoreGridFocus){const {stringIndex,fret}=editor.focusedPosition;refs.grid.querySelector(`[data-string-index="${stringIndex}"][data-fret="${fret}"]`)?.focus({preventScroll:true})}}
 
 cv.addEventListener("pointerdown",e=>{if(e.button!==0)return;pan={id:e.pointerId,x0:e.clientX,y0:e.clientY,s:editor.startFret,a:0}});
-cv.addEventListener("pointermove",e=>{if(!pan||pan.id!==e.pointerId)return;const dx=e.clientX-pan.x0,dy=e.clientY-pan.y0;if(!pan.a){if(Math.abs(dx)<8&&Math.abs(dy)<8)return;if(Math.abs(dy)>Math.abs(dx)){pan=null;return}pan.a=1;cv.setPointerCapture(e.pointerId);e.preventDefault()}const r=cv.getBoundingClientRect(),fp=geometry().fretWidth/GEOMETRY.width*r.width||1,n=Math.min(maxStartFret(),Math.max(0,pan.s+Math.round(-dx/fp)));if(n!==editor.startFret)setStartFret(n,"silent")});
+cv.addEventListener("pointermove",e=>{if(!pan||pan.id!==e.pointerId)return;const dx=e.clientX-pan.x0,dy=e.clientY-pan.y0;if(!pan.a){if(Math.abs(dx)<8&&Math.abs(dy)<8)return;if(Math.abs(dy)>Math.abs(dx)){pan=null;return}pan.a=1;cv.classList.add("is-panning");cv.setPointerCapture(e.pointerId);e.preventDefault()}const r=cv.getBoundingClientRect(),fp=geometry().fretWidth/GEOMETRY.width*r.width||1,n=Math.min(maxStartFret(),Math.max(0,pan.s+Math.round(-dx/fp)));if(n!==editor.startFret)setStartFret(n,"silent")});
 cv.addEventListener("pointerup",endPan);cv.addEventListener("pointercancel",endPan);
 refs.tuning.addEventListener("change",event=>{const id=event.target.value;if(!TUNINGS[id]){announce("Afinação inválida. Nenhuma alteração foi aplicada.",true);refs.tuning.value=history.present.tuningPresetId;return}commitContent(content=>{content.tuningPresetId=id},`Afinação alterada para ${TUNINGS[id].name}.`,editor.selectedMarkerId)});
 refs.start.addEventListener("input",event=>setStartFret(event.target.value));refs.previous.addEventListener("click",()=>setStartFret(editor.startFret-1));refs.next.addEventListener("click",()=>setStartFret(editor.startFret+1));

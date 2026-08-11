@@ -17,10 +17,10 @@ Short orientation for coding agents working on this repository.
 ## Hard budget
 
 ```text
-wc -c index.html  →  ≤ 65.536 bytes
+wc -c index.html  →  ≤ 68.608 bytes
 ```
 
-Source of truth: [ADR 002](adr/002-budget-bytes-transpor-forma.md). Prefer small, surgical edits over refactors that burn the budget.
+Source of truth: [ADR 004](adr/004-budget-bytes-pan-window.md). Prefer small, surgical edits over refactors that burn the budget.
 
 ## Security and a11y (baseline)
 
