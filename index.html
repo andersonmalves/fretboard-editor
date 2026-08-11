@@ -88,7 +88,7 @@ h1{margin:0;font-size:clamp(1.35rem,2.2vw,2rem);font-weight:680;letter-spacing:-
 .panel-title{margin:0;font-size:.8rem;font-weight:720;letter-spacing:.08em;text-transform:uppercase}
 .window-readout{color:var(--color-text-muted);font:600 .75rem/1.3 ui-monospace,SFMono-Regular,Consolas,monospace}
 .artboard-pad{padding:clamp(10px,2vw,24px);background:var(--color-panel-raised)}
-.board-canvas{position:relative;width:100%;aspect-ratio:1200/440;background:var(--color-artboard-bg);border-radius:var(--radius-sm);overflow:hidden;box-shadow:0 8px 20px var(--color-shadow)}
+.board-canvas{position:relative;width:100%;aspect-ratio:1200/440;background:var(--color-artboard-bg);border-radius:var(--radius-sm);overflow:hidden;box-shadow:0 8px 20px var(--color-shadow);touch-action:pan-y}
 #fretboard-svg,.hit-grid{position:absolute;inset:0;width:100%;height:100%}
 #fretboard-svg{display:block}
 .hit-grid{z-index:2}
@@ -208,7 +208,7 @@ kbd{display:inline-block;min-width:25px;padding:2px 5px;border:1px solid var(--c
       <div class="artboard-pad">
         <div class="board-canvas" id="board-canvas">
           <svg id="fretboard-svg" viewBox="0 0 1200 440" role="img" aria-labelledby="svg-title svg-description"></svg>
-          <div class="hit-grid" id="fretboard-grid" role="grid" aria-label="Posições do braço. Use as setas para navegar e Enter ou Espaço para criar ou selecionar."></div>
+          <div class="hit-grid" id="fretboard-grid" role="grid" aria-label="Posições do braço. Arraste, setas ou Enter/Espaço."></div>
         </div>
         <div class="board-caption"><span id="board-caption-primary">Corda 1 no topo · corda 6 na base</span><span id="board-hint">Nota calculada pela afinação</span></div>
       </div>
@@ -307,6 +307,7 @@ const refs={
   connectionField:document.querySelector("#connection-field"),
   connectionList:document.querySelector("#connection-list")
 };
+const cv=refs.grid.parentElement;
 
 const editor={startFret:0,visibleFrets:compactMedia.matches?6:12,selectedMarkerId:null,activeMarkerType:"filled",activeMarkerColor:null,activeConnectionColor:null,activeTool:"marker",linkFrom:null,activeCustomLabel:"",diagramTitleDraft:null,focusedPosition:{stringIndex:0,fret:0}};
 const history={past:[],present:{tuningPresetId:"standard",diagramTitle:DEFAULT_DIAGRAM_TITLE,markers:[],connections:[]},future:[]};
@@ -314,6 +315,7 @@ let markerSequence=0;
 let statusSequence=0;
 let statusTimer=0;
 let labelDraftFor=null;
+let pan=null,skip=0;
 
 function cloneContent(content){return {tuningPresetId:content.tuningPresetId,diagramTitle:content.diagramTitle??DEFAULT_DIAGRAM_TITLE,markers:content.markers.map(marker=>({...marker})),connections:content.connections.map(link=>({...link}))}}
 function displayedDiagramTitle(){return editor.diagramTitleDraft??history.present.diagramTitle??DEFAULT_DIAGRAM_TITLE}
@@ -386,8 +388,6 @@ function editSelected(patch,message){const marker=selectedMarker();if(!marker){a
 function removeSelected(){const marker=selectedMarker();if(!marker){announce("Nenhum marcador selecionado.",true);return}const id=marker.id;commitContent(content=>{content.markers=content.markers.filter(item=>item.id!==id);content.connections=content.connections.filter(link=>link.a!==id&&link.b!==id)},"Marcador removido. Use Desfazer para restaurar.",null);if(editor.linkFrom===id)editor.linkFrom=null}
 function deselect(){if(!editor.selectedMarkerId&&!editor.linkFrom)return;editor.selectedMarkerId=null;editor.linkFrom=null;editor.activeCustomLabel="";labelDraftFor=null;render();announce("Seleção cancelada.")}
 function clearDiagram(){if(!history.present.markers.length&&!history.present.connections.length)return;commitContent(content=>{content.markers=[];content.connections=[]},"Diagrama limpo. Use Desfazer para restaurar.",null);editor.linkFrom=null}
-
-
 function setStartFret(value,source="control"){
   const raw=String(value).trim();const parsed=Number(raw);if(raw===""||!Number.isInteger(parsed)||parsed<0||parsed>MAX_FRET){refs.start.value=String(editor.startFret);refs.startError.textContent="Informe uma casa inteira entre 0 e 24.";refs.start.setAttribute("aria-invalid","true");announce("Casa inicial inválida. O último valor válido foi mantido.",true);return false}
   const clamped=Math.min(parsed,maxStartFret());
@@ -397,6 +397,7 @@ function setStartFret(value,source="control"){
   if(source!=="silent"){const opening=clamped!==parsed?`Janela ajustada para a casa ${clamped} para manter ${editor.visibleFrets} casas visíveis.`:clamped===0?"Janela iniciada no nut.":`Janela iniciada na casa ${clamped}.`;announce(`${opening}${offscreenSuffix()}`)}
   return true
 }
+function endPan(e){if(!pan||pan.id!==e.pointerId)return;const a=pan.a;try{cv.releasePointerCapture(e.pointerId)}catch{}pan=null;if(a){skip=1;setStartFret(editor.startFret)}}
 
 function palette(){const styles=getComputedStyle(document.documentElement);return {artboard:styles.getPropertyValue("--color-artboard-bg").trim(),rule:styles.getPropertyValue("--color-artboard-rule").trim(),ink:styles.getPropertyValue("--color-diagram-ink").trim(),string:styles.getPropertyValue("--color-string").trim(),selection:styles.getPropertyValue("--color-selection").trim(),focus:styles.getPropertyValue("--color-focus-artboard").trim(),white:styles.getPropertyValue("--color-white").trim()}}
 function cssTokenColor(token){return getComputedStyle(document.documentElement).getPropertyValue(token).trim()}
@@ -448,7 +449,7 @@ function fitMarkerLabels(){refs.svg.querySelectorAll("[data-fit]").forEach(node=
 
 function renderGrid(){
   const geo=geometry();const focusedKey=`${editor.focusedPosition.stringIndex}:${editor.focusedPosition.fret}`;const fragment=document.createDocumentFragment();
-  for(let stringIndex=0;stringIndex<6;stringIndex+=1){const row=document.createElement("div");row.className="grid-row";row.setAttribute("role","row");visiblePositions().forEach(fret=>{const button=document.createElement("button");button.type="button";button.className="grid-cell";button.setAttribute("role","gridcell");button.dataset.stringIndex=String(stringIndex);button.dataset.fret=String(fret);button.setAttribute("aria-label",positionLabel(stringIndex,fret));const marker=markerAt(stringIndex,fret);button.setAttribute("aria-selected",String(Boolean(marker&&marker.id===editor.selectedMarkerId)));button.tabIndex=`${stringIndex}:${fret}`===focusedKey?0:-1;const x=positionX(geo,fret);const width=fret===0?geo.nutWidth:geo.fretWidth;const height=Math.max(44,geo.rowGap*.82);button.style.left=`${x/GEOMETRY.width*100}%`;button.style.top=`${geo.stringY(stringIndex)/GEOMETRY.height*100}%`;button.style.width=`${width/GEOMETRY.width*100}%`;button.style.height=`${height/GEOMETRY.height*100}%`;button.addEventListener("click",()=>activatePosition(stringIndex,fret));button.addEventListener("focus",()=>{editor.focusedPosition={stringIndex,fret};renderSvg()});button.addEventListener("keydown",handleGridKey);row.append(button)});fragment.append(row)}
+  for(let stringIndex=0;stringIndex<6;stringIndex+=1){const row=document.createElement("div");row.className="grid-row";row.setAttribute("role","row");visiblePositions().forEach(fret=>{const button=document.createElement("button");button.type="button";button.className="grid-cell";button.setAttribute("role","gridcell");button.dataset.stringIndex=String(stringIndex);button.dataset.fret=String(fret);button.setAttribute("aria-label",positionLabel(stringIndex,fret));const marker=markerAt(stringIndex,fret);button.setAttribute("aria-selected",String(Boolean(marker&&marker.id===editor.selectedMarkerId)));button.tabIndex=`${stringIndex}:${fret}`===focusedKey?0:-1;const x=positionX(geo,fret);const width=fret===0?geo.nutWidth:geo.fretWidth;const height=Math.max(44,geo.rowGap*.82);button.style.left=`${x/GEOMETRY.width*100}%`;button.style.top=`${geo.stringY(stringIndex)/GEOMETRY.height*100}%`;button.style.width=`${width/GEOMETRY.width*100}%`;button.style.height=`${height/GEOMETRY.height*100}%`;button.addEventListener("click",()=>{if(skip){skip=0;return}activatePosition(stringIndex,fret)});button.addEventListener("focus",()=>{editor.focusedPosition={stringIndex,fret};renderSvg()});button.addEventListener("keydown",handleGridKey);row.append(button)});fragment.append(row)}
   refs.grid.replaceChildren(fragment)
 }
 function handleGridKey(event){const stringIndex=Number(event.currentTarget.dataset.stringIndex);const fret=Number(event.currentTarget.dataset.fret);const columns=visiblePositions();let row=stringIndex;let column=columns.indexOf(fret);if(event.key==="ArrowLeft")column=Math.max(0,column-1);else if(event.key==="ArrowRight")column=Math.min(columns.length-1,column+1);else if(event.key==="ArrowUp")row=Math.max(0,row-1);else if(event.key==="ArrowDown")row=Math.min(5,row+1);else if(event.key==="Home")column=0;else if(event.key==="End")column=columns.length-1;else return;event.preventDefault();const target=refs.grid.querySelector(`[data-string-index="${row}"][data-fret="${columns[column]}"]`);if(target){editor.focusedPosition={stringIndex:row,fret:columns[column]};target.focus()}}
@@ -466,6 +467,9 @@ function renderInspector(){
 }
 function render(){const restoreGridFocus=document.activeElement?.classList.contains("grid-cell");keepSelectionValid();renderSvg();renderGrid();renderInspector();if(restoreGridFocus){const {stringIndex,fret}=editor.focusedPosition;refs.grid.querySelector(`[data-string-index="${stringIndex}"][data-fret="${fret}"]`)?.focus({preventScroll:true})}}
 
+cv.addEventListener("pointerdown",e=>{if(e.button!==0)return;pan={id:e.pointerId,x0:e.clientX,y0:e.clientY,s:editor.startFret,a:0}});
+cv.addEventListener("pointermove",e=>{if(!pan||pan.id!==e.pointerId)return;const dx=e.clientX-pan.x0,dy=e.clientY-pan.y0;if(!pan.a){if(Math.abs(dx)<8&&Math.abs(dy)<8)return;if(Math.abs(dy)>Math.abs(dx)){pan=null;return}pan.a=1;cv.setPointerCapture(e.pointerId);e.preventDefault()}const r=cv.getBoundingClientRect(),fp=geometry().fretWidth/GEOMETRY.width*r.width||1,n=Math.min(maxStartFret(),Math.max(0,pan.s+Math.round(-dx/fp)));if(n!==editor.startFret)setStartFret(n,"silent")});
+cv.addEventListener("pointerup",endPan);cv.addEventListener("pointercancel",endPan);
 refs.tuning.addEventListener("change",event=>{const id=event.target.value;if(!TUNINGS[id]){announce("Afinação inválida. Nenhuma alteração foi aplicada.",true);refs.tuning.value=history.present.tuningPresetId;return}commitContent(content=>{content.tuningPresetId=id},`Afinação alterada para ${TUNINGS[id].name}.`,editor.selectedMarkerId)});
 refs.start.addEventListener("input",event=>setStartFret(event.target.value));refs.previous.addEventListener("click",()=>setStartFret(editor.startFret-1));refs.next.addEventListener("click",()=>setStartFret(editor.startFret+1));
 refs.undo.addEventListener("click",undo);refs.redo.addEventListener("click",redo);refs.transposeDown.addEventListener("click",()=>transposeShape(-1));refs.transposeUp.addEventListener("click",()=>transposeShape(1));refs.clear.addEventListener("click",clearDiagram);refs.remove.addEventListener("click",removeSelected);refs.deselect.addEventListener("click",deselect);

@@ -15,6 +15,7 @@ class FretboardPage {
     this.page = page;
     this.svg = page.locator("#fretboard-svg");
     this.grid = page.locator("#fretboard-grid");
+    this.canvas = page.locator("#board-canvas");
     this.tuning = page.locator("#tuning-select");
     this.startFret = page.locator("#start-fret");
     this.startFretError = page.locator("#start-fret-error");
@@ -56,6 +57,26 @@ class FretboardPage {
     this.page.on("pageerror", (error) => this.consoleErrors.push(`pageerror: ${error.message}`));
     await this.page.goto("/");
     await expect(this.svg).toBeVisible();
+  }
+
+  /** Arrasta horizontalmente na prancha para mover a janela de casas. */
+  async panWindow(deltaX, options = {}) {
+    const box = await this.canvas.boundingBox();
+    if (!box) throw new Error("Prancha indisponível para pan.");
+    const y = box.y + box.height / 2;
+    const startX = box.x + box.width * (options.fromRatio ?? 0.5);
+    const endX = startX + deltaX;
+    await this.page.mouse.move(startX, y);
+    await this.page.mouse.down();
+    await this.page.mouse.move(endX, y, {
+      steps: Math.max(3, Math.round(Math.abs(deltaX) / 20))
+    });
+    await this.page.mouse.up();
+  }
+
+  async fretPixelWidth() {
+    const box = await this.cell(1, 1).boundingBox();
+    return box?.width ?? 50;
   }
 
   cell(corda, casa) {
