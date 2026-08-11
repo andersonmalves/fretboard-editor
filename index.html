@@ -90,7 +90,7 @@ h1{margin:0;font-size:clamp(1.35rem,2.2vw,2rem);font-weight:680;letter-spacing:-
 .button.danger{color:var(--color-destructive)}
 .command-spacer{flex:1}
 .button-cluster{display:flex;gap:var(--space-sm)}
-.history-cluster,.transpose-cluster,.clear-button,.actions-cluster{margin-top:22px}.actions-cluster{margin-left:auto;align-items:center}.cluster-divider{width:1px;align-self:stretch;min-height:var(--control-min);background:var(--color-border);margin:0 2px}.export-menu{position:relative}.export-popover{position:absolute;right:0;top:calc(100% + 4px);z-index:12;min-width:168px;padding:var(--space-sm);display:grid;gap:var(--space-sm);background:var(--color-panel-bg);border:1px solid var(--color-border);border-radius:var(--radius-sm);box-shadow:0 8px 20px var(--color-shadow)}.export-popover[hidden]{display:none!important}.export-menu-item:nth-child(3){border-top:1px solid var(--color-border);margin-top:2px;padding-top:var(--space-sm)}.export-menu-item{width:100%;justify-content:flex-start}
+.history-cluster,.transpose-cluster,.clear-button,.sound-toggle,.actions-cluster{margin-top:22px}.actions-cluster{margin-left:auto;align-items:center}.cluster-divider{width:1px;align-self:stretch;min-height:var(--control-min);background:var(--color-border);margin:0 2px}.export-menu{position:relative}.export-popover{position:absolute;right:0;top:calc(100% + 4px);z-index:12;min-width:168px;padding:var(--space-sm);display:grid;gap:var(--space-sm);background:var(--color-panel-bg);border:1px solid var(--color-border);border-radius:var(--radius-sm);box-shadow:0 8px 20px var(--color-shadow)}.export-popover[hidden]{display:none!important}.export-menu-item:nth-child(3){border-top:1px solid var(--color-border);margin-top:2px;padding-top:var(--space-sm)}.export-menu-item{width:100%;justify-content:flex-start}
 .position-control{display:grid;grid-template-columns:var(--control-min) minmax(0,1fr) var(--control-min);gap:var(--space-sm)}
 .error{margin:4px 0 0;color:var(--color-error);font-size:.76rem}.error:empty{display:none}
 .workspace{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:var(--space-lg);align-items:start}
@@ -114,7 +114,7 @@ h1{margin:0;font-size:clamp(1.35rem,2.2vw,2rem);font-weight:680;letter-spacing:-
 .board-caption .offscreen{color:var(--color-error);font-weight:700}
 .inspector{position:sticky;top:14px;min-width:0;overflow:hidden}
 .inspector-body{display:grid;gap:16px;padding:16px;min-width:0}
-.selection-card{display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:12px;align-items:center;min-height:60px}
+.selection-card{display:grid;grid-template-columns:52px minmax(0,1fr);gap:12px;align-items:center;min-height:60px}
 .note-badge{display:grid;place-items:center;width:52px;height:52px;border:3px solid var(--color-white);border-radius:50%;background:var(--preview-color,var(--color-selection));color:var(--preview-ink,var(--color-white));font:750 1rem/1 ui-monospace,SFMono-Regular,Consolas,monospace}
 .note-badge[data-type="outline"]{border-color:var(--preview-color);background:var(--color-artboard-bg);color:var(--preview-color)}
 .note-badge:is([data-type="muted"],[data-type="step"]){background:transparent;color:var(--color-text-primary)}.note-badge[data-type="muted"]{border-color:transparent;font-size:1.7rem}.note-badge[data-type="step"]{border-color:var(--color-selection)}
@@ -128,7 +128,7 @@ h1{margin:0;font-size:clamp(1.35rem,2.2vw,2rem);font-weight:680;letter-spacing:-
 .tool-bar-button span{display:block;margin-bottom:2px;font-size:1.1rem}
 .mode-button span{display:inline;margin:0 5px 0 0}.mode-button[aria-pressed="true"]{border-color:var(--color-selection);background:var(--color-selection);color:var(--color-white);box-shadow:inset 0 0 0 2px var(--color-white)}
 .style-group .tool-bar-button[aria-pressed="true"]{border-color:var(--color-selection);color:var(--color-text-primary);box-shadow:inset 0 0 0 1px var(--color-selection)}
-.sound-toggle{min-width:44px}.sound-toggle[aria-pressed="true"]{border-color:var(--color-selection);box-shadow:inset 0 0 0 1px var(--color-selection)}
+.sound-toggle{min-width:44px}.sound-toggle[aria-pressed="true"]{border-color:var(--color-selection);box-shadow:inset 0 0 0 1px var(--color-selection)}.sound-toggle[aria-pressed="false"] span{opacity:.45}
 .connection-list{margin:0;padding:0;list-style:none;display:grid;gap:var(--space-sm)}
 .inspector details{border-top:1px solid var(--color-border)}.inspector details summary{min-height:44px;cursor:pointer}
 .connection-item{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:.78rem}
@@ -152,7 +152,7 @@ h1{margin:0;font-size:clamp(1.35rem,2.2vw,2rem);font-weight:680;letter-spacing:-
 }
 @media(max-width:767px){
   .app{padding:12px}.masthead{align-items:center;margin-bottom:14px}.edition{display:none}.brand-mark{width:38px;height:38px}.masthead p{font-size:.78rem}
-  .command-bar{display:grid;grid-template-columns:1fr;padding:var(--space-md)}.field.tuning,.field.position,.field.title{width:auto;min-width:0;grid-column:1}.field.position{max-width:none}.position-control{grid-template-columns:var(--control-min) 1fr var(--control-min)}.actions-cluster{grid-column:1;grid-row:2;margin-top:0;justify-content:flex-end}.transpose-cluster{grid-column:1;margin-top:0}.transpose-cluster .button{flex:1}.clear-button{grid-column:1;margin-top:0}
+  .command-bar{display:grid;grid-template-columns:1fr;padding:var(--space-md)}.field.tuning,.field.position,.field.title{width:auto;min-width:0;grid-column:1}.field.position{max-width:none}.position-control{grid-template-columns:var(--control-min) 1fr var(--control-min)}.actions-cluster{grid-column:1;grid-row:2;margin-top:0;justify-content:flex-end}.transpose-cluster{grid-column:1;margin-top:0}.transpose-cluster .button{flex:1}.clear-button{grid-column:1;margin-top:0}.sound-toggle{grid-column:1;margin-top:0}
   .mobile-quick{display:flex}
   .workspace{gap:var(--space-md)}.panel-header{padding:11px 12px}.artboard-pad{padding:7px}.board-canvas{aspect-ratio:12/11}.board-caption{display:block}.board-caption span{display:block;text-align:left!important}
   .inspector-body{display:grid;grid-template-columns:1fr;padding:var(--space-lg)}.inspector-actions{grid-column:auto}.grid-cell{min-width:var(--control-min);min-height:var(--control-min)}.status{position:fixed;z-index:10;left:12px;right:12px;bottom:12px;margin:0;padding:11px 13px;border:1px solid var(--color-border);border-radius:var(--radius-sm);background:var(--color-panel-bg);box-shadow:0 8px 20px var(--color-shadow);opacity:0;pointer-events:none}.status.visible{opacity:1}
@@ -224,7 +224,7 @@ h1{margin:0;font-size:clamp(1.35rem,2.2vw,2rem);font-weight:680;letter-spacing:-
       <button class="button" id="transpose-down" type="button" aria-label="Transpor forma uma casa em direção ao nut" disabled>−1 casa</button>
       <button class="button" id="transpose-up" type="button" aria-label="Transpor forma uma casa em direção ao corpo" disabled>+1 casa</button>
     </div>
-    <button class="button danger clear-button" id="clear-button" type="button" disabled>Limpar diagrama</button>
+    <button class="tool-bar-button sound-toggle" id="sound-toggle" type="button" aria-label="Som das notas" aria-pressed="true"><span aria-hidden="true">♪</span>Som</button><button class="button danger clear-button" id="clear-button" type="button" disabled>Limpar diagrama</button>
   </section>
 
   <div class="workspace">
@@ -247,7 +247,7 @@ h1{margin:0;font-size:clamp(1.35rem,2.2vw,2rem);font-weight:680;letter-spacing:-
     <aside class="panel inspector" aria-labelledby="inspector-title">
       <div class="panel-header"><h2 class="panel-title" id="inspector-title">Ferramentas</h2><span class="window-readout" id="selection-coordinate">—</span></div><div class="inspector-body">
         <div class="field"><span class="field-label" id="mode-label">Modo</span><div class="mode-group" role="toolbar" aria-labelledby="mode-label"><button class="tool-bar-button mode-button" type="button" data-tool="marker" aria-pressed="true"><span aria-hidden="true">●</span>Marcar</button><button class="tool-bar-button mode-button" type="button" data-tool="connect" aria-pressed="false"><span aria-hidden="true">╱</span>Ligar</button></div></div>
-        <div class="selection-card"><div class="note-badge" id="note-badge" data-type="filled" aria-hidden="true"></div><div><div class="selection-kicker" id="selection-kicker"></div><div class="selection-name" id="selection-name"></div></div><button class="tool-bar-button sound-toggle" id="sound-toggle" type="button" aria-label="Som das notas" aria-pressed="true"><span aria-hidden="true">♪</span>Som</button></div>
+        <div class="selection-card"><div class="note-badge" id="note-badge" data-type="filled" aria-hidden="true"></div><div><div class="selection-kicker" id="selection-kicker"></div><div class="selection-name" id="selection-name"></div></div></div>
         <div id="marker-fields"><div class="field"><span class="field-label" id="marker-tool-label">Estilo</span><div class="style-group" id="marker-tool-bar" role="toolbar" aria-labelledby="marker-tool-label">
           <button class="tool-bar-button" type="button" data-type="filled" aria-pressed="true"><span aria-hidden="true">●</span>Preenchido</button><button class="tool-bar-button" type="button" data-type="outline" aria-pressed="false"><span aria-hidden="true">○</span>Vazado</button><button class="tool-bar-button" type="button" data-type="muted" aria-pressed="false"><span aria-hidden="true">×</span>Abafado</button>
         </div></div></div>
