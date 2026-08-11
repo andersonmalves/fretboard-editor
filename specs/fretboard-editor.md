@@ -262,6 +262,7 @@ interface EditorState {
   activeTool: 'marker' | 'connect';
   linkFrom: string | null;
   activeCustomLabel: string;
+  soundEnabled: boolean;
 }
 
 interface HistoryState {
@@ -293,6 +294,7 @@ Invariantes:
 - `connections` armazena pares normalizados (`a` < `b` lexicograficamente) sem duplicata; `color` segue
   a paleta de marcadores; remover marcador remove ligações incidentes; `clearDiagram` limpa ligações.
 - `activeConnectionColor` e `activeTool` são sticky e não entram no histórico; `linkFrom` é efêmero.
+- `soundEnabled` inicia ligado, é efêmero e não entra no histórico nem no documento exportado.
 - Histórico registra somente criação, edição, remoção, limpeza, ligação, desligação, mudança de
   afinação e — quando a feature [`transpose-shape`](transpose-shape.md) estiver entregue —
   transposição de forma. Seleção, ferramenta ativa, rótulo em digitação e navegação da janela não
@@ -332,9 +334,9 @@ Não haverá telemetria remota. O editor deve oferecer observabilidade para o us
 - O fluxo criar → selecionar → editar → remover → desfazer é executável apenas por teclado.
 - No Chrome estável da máquina de desenvolvimento, o p95 de 100 atualizações de estado, após dez
   aquecimentos, permanece abaixo de 16 ms para 72 posições fretadas + seis alvos do nut.
-- O arquivo-fonte UTF-8 `index.html` permanece em até **73.728** bytes, medido por
+- O arquivo-fonte UTF-8 `index.html` permanece em até **77.824** bytes, medido por
   `wc -c index.html`; não há artefato minificado separado. O teto vigente é o
-  [`ADR 006`](../adr/006-budget-bytes-selection-controls.md).
+  [`ADR 007`](../adr/007-budget-bytes-note-audio.md).
 - Não há dependências externas nem requisições de rede em runtime.
 - Qualquer motion respeita `prefers-reduced-motion`.
 
@@ -453,8 +455,11 @@ Marcação: `[x]` = implementado e/ou coberto por teste automatizado. Itens manu
 - [x] AC-41: Com marcador selecionado, o inspetor lista ligações incidentes com remoção individual.
 - [x] AC-42: O dock separa modo e estilo, distingue próximo marcador de edição, mostra preview vivo,
   nome da cor e contador do rótulo; no modo Ligar orienta origem/destino e oculta campos irrelevantes.
+- [x] AC-43: Criar marcador não abafado reproduz uma nota curta na frequência derivada da afinação,
+  corda e casa; selecionar ou editar não toca; o dock permite mutar com estado `aria-pressed`, e a
+  preferência permanece somente durante a sessão.
 - [x] AC-32: A aplicação não faz requisições de rede em runtime e `wc -c index.html` retorna no
-  máximo 73.728 bytes ([ADR 006](../adr/006-budget-bytes-selection-controls.md)).
+  máximo 77.824 bytes ([ADR 007](../adr/007-budget-bytes-note-audio.md)).
 - [x] AC-33: Com reduced motion ativo, nenhuma transição ou animação não essencial permanece.
 - [x] AC-34: Labels com `<>&"'`, whitespace e caracteres de controle são normalizados/rejeitados
   conforme o data model e nunca criam markup, atributos ou URLs.
@@ -477,6 +482,7 @@ Marcação: `[x]` = implementado e/ou coberto por teste automatizado. Itens manu
 - Navegar por teclado nos limites da primeira/última corda e casa.
 - Viewport estreito em zoom de 200%.
 - Device pixel ratio fracionário ou maior que 1.
+- Web Audio indisponível ou suspenso pelo navegador: a criação visual continua sem erro.
 
 ## 16. Risks
 

@@ -9,6 +9,7 @@ backend ou serviço externo.
 - Braço de seis cordas com navegação entre as casas 0 e 24.
 - Afinações Padrão, Drop D, Eb padrão, Open G e Open C.
 - Notas automáticas com sustenidos ou bemóis conforme a afinação.
+- Feedback sonoro da nota ao criar marcadores, com opção de mutar.
 - Marcadores preenchidos, vazados e abafados.
 - Dock contextual com preview, edição de marcador e fluxo guiado de ligações.
 - Histórico em memória com desfazer e refazer, limitado a 50 estados.
@@ -37,10 +38,11 @@ usado nas validações e evita diferenças de segurança entre navegadores para 
 1. Escolha uma afinação.
 2. Informe a casa inicial ou use as setas anterior e próxima.
 3. No dock **Ferramentas**, escolha o modo **Marcar**, o estilo, a cor e o rótulo opcional.
-4. Ative uma posição do braço para criar o marcador.
-5. Selecione um marcador existente para editá-lo; use **Ligar** para escolher origem e destino.
-6. Use **Baixar SVG**, **Baixar PNG** ou **Baixar JSON** para exportar a prancha visível (SVG/PNG) ou o diagrama completo (JSON).
-7. Use **Importar JSON** para carregar um diagrama salvo; a importação substitui o conteúdo atual e pode ser desfeita.
+4. Mantenha **Som** ativo para ouvir a nota ao criar o marcador, ou desative-o para editar em silêncio.
+5. Ative uma posição do braço para criar o marcador.
+6. Selecione um marcador existente para editá-lo; use **Ligar** para escolher origem e destino.
+7. Use **Baixar SVG**, **Baixar PNG** ou **Baixar JSON** para exportar a prancha visível (SVG/PNG) ou o diagrama completo (JSON).
+8. Use **Importar JSON** para carregar um diagrama salvo; a importação substitui o conteúdo atual e pode ser desfeita.
 
 Marcadores abafados são permitidos somente no nut, casa 0. Um marcador criado ou editado no nut com
 a ferramenta preenchida é normalizado para vazado, representação usada para corda solta.
@@ -94,6 +96,7 @@ Mais detalhes estão na
 - A criação ou edição preserva o foco na posição ativa.
 - Estados de seleção e ferramenta usam atributos ARIA, além do tratamento visual.
 - A região `aria-live` anuncia criação, edição, remoção, histórico e erros.
+- O som complementa o feedback visual e pode ser mutado; nenhuma ação depende apenas do áudio.
 - Controles touch têm alvo mínimo de 44 × 44 px, inclusive em tablets com ponteiro coarse.
 - O layout compacto mostra seis casas; a partir de 768 px, doze casas ficam disponíveis.
 - `prefers-reduced-motion` remove transições não essenciais.
@@ -110,7 +113,7 @@ Mais detalhes estão na
 
 Na versão atual:
 
-- `index.html` possui no máximo 73.728 bytes ([ADR 006](adr/006-budget-bytes-selection-controls.md)).
+- `index.html` possui no máximo 77.824 bytes ([ADR 007](adr/007-budget-bytes-note-audio.md)).
 - O renderer mediu p95 inferior a 1 ms em 100 atualizações, após 10 aquecimentos, no ambiente de
   desenvolvimento.
 - Foco sobre a prancha tem contraste de 5,12:1.

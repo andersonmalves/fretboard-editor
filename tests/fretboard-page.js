@@ -39,6 +39,7 @@ class FretboardPage {
     this.status = page.locator("#status");
     this.readout = page.locator("#window-readout");
     this.badge = page.locator("#note-badge");
+    this.sound = page.locator("#sound-toggle");
     this.coordinate = page.locator("#selection-coordinate");
     this.selectionName = page.locator("#selection-name");
     this.hint = page.locator("#board-hint");

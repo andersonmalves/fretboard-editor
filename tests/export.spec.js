@@ -224,7 +224,7 @@ test.describe("Exportacao", () => {
 });
 
 test.describe("Orcamento do artefato", () => {
-  test("AC-32: index.html permanece dentro de 73.728 bytes", () => {
+  test("AC-32: index.html permanece dentro de 77.824 bytes", () => {
     const arquivo = path.join(__dirname, "..", "index.html");
     const bytes = fs.statSync(arquivo).size;
 

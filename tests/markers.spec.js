@@ -187,9 +187,11 @@ test.describe("Criacao, selecao e edicao de marcadores", () => {
   test("o seletor de modo encerra Ligar e recupera os estilos", async ({ fretboard }) => {
     await fretboard.pickWorkTool("connect");
     await expect(fretboard.markerFields).toBeHidden();
+    await expect(fretboard.sound).toBeHidden();
     await expect(fretboard.workToolButton("connect")).toHaveAttribute("aria-pressed", "true");
     await fretboard.pickWorkTool("marker");
     await expect(fretboard.markerFields).toBeVisible();
+    await expect(fretboard.sound).toBeVisible();
     await fretboard.toolButton("outline").click();
 
     expect((await fretboard.state()).editor.activeTool).toBe("marker");
@@ -205,6 +207,55 @@ test.describe("Criacao, selecao e edicao de marcadores", () => {
     await expect(fretboard.kicker).toHaveText("Editando marcador");
     await expect(fretboard.selectionName).toContainText("Corda 3 · casa 4 · nota");
     await expect(fretboard.inspectorActions).toBeVisible();
+  });
+
+  test("AC-43: criação toca a altura real e o controle permite mutar", async ({ fretboard }) => {
+    await fretboard.page.evaluate(() => {
+      window.__playedNotes = [];
+      window.AudioContext = class {
+        constructor() {
+          this.currentTime = 1;
+          this.destination = {};
+        }
+        resume() {}
+        createOscillator() {
+          const notes = window.__playedNotes;
+          return {
+            frequency: { value: 0 },
+            connect(target) { return target; },
+            start() { notes.push(this.frequency.value); },
+            stop() {}
+          };
+        }
+        createGain() {
+          return {
+            gain: {
+              setValueAtTime() {},
+              exponentialRampToValueAtTime() {}
+            },
+            connect(target) { return target; }
+          };
+        }
+      };
+    });
+
+    await expect(fretboard.sound).toHaveAttribute("aria-pressed", "true");
+    await fretboard.activate(1, 5); // E4 + 5 semitons = A4, 440 Hz.
+    await fretboard.activate(1, 5); // Selecionar não repete o som.
+    expect(await fretboard.page.evaluate(() => window.__playedNotes)).toEqual([440]);
+
+    await fretboard.sound.click();
+    await expect(fretboard.sound).toHaveAttribute("aria-pressed", "false");
+    await expect(fretboard.status).toContainText("Som desativado");
+    expect((await fretboard.state()).editor.activeMarkerType).toBe("filled");
+    await fretboard.activate(2, 5);
+    expect(await fretboard.page.evaluate(() => window.__playedNotes)).toEqual([440]);
+
+    await fretboard.sound.click();
+    await expect(fretboard.status).toContainText("Som ativado");
+    await fretboard.pickTool("muted");
+    await fretboard.activate(3, 0);
+    expect(await fretboard.page.evaluate(() => window.__playedNotes)).toEqual([440]);
   });
 
   test("atalhos ficam disponíveis sem alongar o dock inicialmente", async ({ fretboard }) => {
