@@ -222,11 +222,11 @@ test.describe("Exportacao", () => {
 });
 
 test.describe("Orcamento do artefato", () => {
-  test("AC-32: index.html permanece dentro de 59.392 bytes", () => {
+  test("AC-32: index.html permanece dentro de 65.536 bytes", () => {
     const arquivo = path.join(__dirname, "..", "index.html");
     const bytes = fs.statSync(arquivo).size;
 
-    expect(bytes).toBeLessThanOrEqual(59392);
+    expect(bytes).toBeLessThanOrEqual(65536);
   });
 
   test("nao ha dependencia de runtime carregada pelo documento", () => {

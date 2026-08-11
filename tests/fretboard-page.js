@@ -30,6 +30,9 @@ class FretboardPage {
     this.label = page.locator("#label-input");
     this.exportSvg = page.locator("#export-svg");
     this.exportPng = page.locator("#export-png");
+    this.exportJson = page.locator("#export-json");
+    this.importJson = page.locator("#import-json");
+    this.importJsonInput = page.locator("#import-json-input");
     this.status = page.locator("#status");
     this.readout = page.locator("#window-readout");
     this.badge = page.locator("#note-badge");
@@ -185,6 +188,14 @@ class FretboardPage {
 
   async exportedSvg() {
     return this.page.evaluate(() => window.__fretboardEditor.exportedSvgMarkup());
+  }
+
+  async serializedDiagram() {
+    return this.page.evaluate(() => window.__fretboardEditor.serializeDiagram());
+  }
+
+  async importDiagramDocument(text) {
+    return this.page.evaluate((payload) => window.__fretboardEditor.importDiagramText(payload), text);
   }
 
   /** Textos dos marcadores desenhados, na ordem em que aparecem no SVG. */

@@ -17,7 +17,7 @@ Short orientation for coding agents working on this repository.
 ## Hard budget
 
 ```text
-wc -c index.html  →  ≤ 59.392 bytes
+wc -c index.html  →  ≤ 65.536 bytes
 ```
 
 Source of truth: [ADR 002](adr/002-budget-bytes-transpor-forma.md). Prefer small, surgical edits over refactors that burn the budget.

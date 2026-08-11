@@ -60,7 +60,7 @@ h1{margin:0;font-size:clamp(1.35rem,2.2vw,2rem);font-weight:680;letter-spacing:-
 .masthead p{margin:3px 0 0;color:var(--color-text-muted);font-size:.86rem}
 .edition{color:var(--color-text-muted);font:600 .72rem/1.3 ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.08em;text-transform:uppercase;text-align:right}
 .command-bar,.panel{background:var(--color-panel-bg);border:1px solid var(--color-border);border-radius:var(--radius-md)}
-.command-bar{display:flex;align-items:start;gap:10px;padding:12px;margin-bottom:14px;overflow:visible}
+.command-bar{display:flex;align-items:start;flex-wrap:wrap;gap:10px;padding:12px;margin-bottom:14px;overflow:visible}
 .field{display:grid;gap:5px;min-width:0}
 .field>label,.field-label{color:var(--color-text-muted);font-size:.72rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase}
 .field.tuning{min-width:210px}
@@ -79,7 +79,7 @@ h1{margin:0;font-size:clamp(1.35rem,2.2vw,2rem);font-weight:680;letter-spacing:-
 .button.danger{color:var(--color-destructive)}
 .command-spacer{flex:1}
 .button-cluster{display:flex;gap:6px}
-.history-cluster,.transpose-cluster,.clear-button,.export-cluster{margin-top:22px}
+.history-cluster,.transpose-cluster,.clear-button,.export-cluster{margin-top:22px}.export-cluster{margin-left:auto}
 .position-control{display:grid;grid-template-columns:44px minmax(0,1fr) 44px;gap:6px}
 .error{margin:4px 0 0;color:var(--color-error);font-size:.76rem}.error:empty{display:none}
 .workspace{display:grid;grid-template-columns:minmax(0,1fr) 286px;gap:14px;align-items:start}
@@ -133,7 +133,7 @@ kbd{display:inline-block;min-width:25px;padding:2px 5px;border:1px solid var(--c
 }
 @media(max-width:767px){
   .app{padding:12px}.masthead{align-items:center;margin-bottom:14px}.edition{display:none}.brand-mark{width:38px;height:38px}.masthead p{font-size:.78rem}
-  .command-bar{display:grid;grid-template-columns:1fr auto;padding:10px}.field.tuning,.field.position,.field.title{width:auto;min-width:0}.field.title{grid-column:1/-1}.field.position{grid-column:1/-1}.position-control{grid-template-columns:44px 1fr 44px}.history-cluster{grid-column:2;grid-row:1}.transpose-cluster{grid-column:1/-1;margin-top:0}.transpose-cluster .button{flex:1}.export-cluster{grid-column:1/-1;margin-top:0}.export-cluster .button{flex:1}.clear-button{grid-column:1/-1;margin-top:0}
+  .command-bar{display:grid;grid-template-columns:1fr auto;padding:10px}.field.tuning,.field.position,.field.title{width:auto;min-width:0}.field.title{grid-column:1/-1}.field.position{grid-column:1/-1}.position-control{grid-template-columns:44px 1fr 44px}.history-cluster{grid-column:2;grid-row:1}.transpose-cluster{grid-column:1/-1;margin-top:0}.transpose-cluster .button{flex:1}.export-cluster{grid-column:1/-1;margin-top:0;display:grid;grid-template-columns:1fr 1fr;width:100%}.export-cluster .button{flex:unset;min-width:0}.clear-button{grid-column:1/-1;margin-top:0}
   .workspace{gap:10px}.panel-header{padding:11px 12px}.artboard-pad{padding:7px}.board-canvas{aspect-ratio:12/11}.board-caption{display:block}.board-caption span{display:block;text-align:left!important}
   .inspector-body{display:grid;grid-template-columns:1fr;padding:14px}.inspector-actions,.shortcut-list{grid-column:auto}.grid-cell{min-width:44px;min-height:44px}.status{position:fixed;z-index:10;left:12px;right:12px;bottom:12px;margin:0;padding:11px 13px;border:1px solid var(--color-border);border-radius:var(--radius-sm);background:var(--color-panel-bg);box-shadow:0 8px 20px var(--color-shadow);opacity:0;pointer-events:none}.status.visible{opacity:1}
 }
@@ -194,8 +194,11 @@ kbd{display:inline-block;min-width:25px;padding:2px 5px;border:1px solid var(--c
     </div>
     <button class="button danger clear-button" id="clear-button" type="button" disabled>Limpar</button>
     <div class="button-cluster export-cluster">
+      <button class="button" id="export-json" type="button">Baixar JSON</button>
+      <button class="button" id="import-json" type="button">Importar JSON</button>
       <button class="button" id="export-svg" type="button">Baixar SVG</button>
       <button class="button primary" id="export-png" type="button">Baixar PNG</button>
+      <input hidden id="import-json-input" type="file" accept="application/json,.json">
     </div>
   </section>
 
@@ -281,6 +284,9 @@ const MARKER_COLORS=[
   {value:"--color-marker-gray",label:"Cinza",token:"--color-marker-gray"}
 ];
 const DEFAULT_DIAGRAM_TITLE="FRETBOARD / 06 STRING";
+const SCHEMA_VERSION=1,MAX_JSON_BYTES=65536,MAX_IMPORT_MARKERS=150;
+const MARKER_TYPES=new Set(["filled","outline","muted"]);
+function isMarkerColor(value){return value===null||MARKER_COLORS.some(entry=>entry.value===value)}
 const MUTED_ONLY_AT_NUT="Marcador abafado só pode ser usado no nut, casa 0.";
 const FILLED_NORMALIZED_AT_NUT="Na casa 0 o marcador preenchido vira vazado, que representa corda solta.";
 
@@ -290,7 +296,7 @@ const refs={
   previous:document.querySelector("#previous-fret"),next:document.querySelector("#next-fret"),undo:document.querySelector("#undo-button"),redo:document.querySelector("#redo-button"),
   transposeDown:document.querySelector("#transpose-down"),transposeUp:document.querySelector("#transpose-up"),
   clear:document.querySelector("#clear-button"),remove:document.querySelector("#remove-button"),deselect:document.querySelector("#deselect-button"),
-  exportSvg:document.querySelector("#export-svg"),exportPng:document.querySelector("#export-png"),label:document.querySelector("#label-input"),
+  exportSvg:document.querySelector("#export-svg"),exportPng:document.querySelector("#export-png"),exportJson:document.querySelector("#export-json"),importJson:document.querySelector("#import-json"),importJsonInput:document.querySelector("#import-json-input"),label:document.querySelector("#label-input"),
   readout:document.querySelector("#window-readout"),coordinate:document.querySelector("#selection-coordinate"),badge:document.querySelector("#note-badge"),
   kicker:document.querySelector("#selection-kicker"),selectionName:document.querySelector("#selection-name"),status:document.querySelector("#status"),
   hint:document.querySelector("#board-hint"),
@@ -475,16 +481,25 @@ document.addEventListener("keydown",event=>{const editable=event.target instance
 function updateResponsiveGeometry(){editor.visibleFrets=compactMedia.matches?6:12;Object.assign(GEOMETRY,compactMedia.matches||touchMedia.matches?expandedGeometry:desktopGeometry);setStartFret(editor.startFret,"silent")}
 compactMedia.addEventListener("change",updateResponsiveGeometry);touchMedia.addEventListener("change",updateResponsiveGeometry);
 
+function serializeDiagram(){return JSON.stringify({schemaVersion:SCHEMA_VERSION,tuningPresetId:history.present.tuningPresetId,diagramTitle:history.present.diagramTitle,startFret:editor.startFret,markers:history.present.markers,connections:history.present.connections})}
+function parseMarker(raw,seen){if(!raw||typeof raw!=="object")throw new Error("invalid_marker");const id=typeof raw.id==="string"&&raw.id?raw.id:null;if(!id)throw new Error("invalid_marker");const stringIndex=raw.stringIndex,fret=raw.fret;if(!Number.isInteger(stringIndex)||stringIndex<0||stringIndex>5||!Number.isInteger(fret)||fret<0||fret>MAX_FRET)throw new Error("invalid_marker");const type=raw.type;if(!MARKER_TYPES.has(type)||type==="muted"&&fret!==0)throw new Error("invalid_marker");const color=raw.color===null?null:raw.color;if(!isMarkerColor(color))throw new Error("invalid_marker");const key=`${stringIndex}:${fret}`;if(seen.has(key))throw new Error("invalid_marker");seen.add(key);return {id,stringIndex,fret,type:normalizeType(type,fret),color,customLabel:normalizeLabel(String(raw.customLabel??""))}}
+function parseConnection(raw,ids,seen){if(!raw||typeof raw!=="object")throw new Error("invalid_connection");const a=typeof raw.a==="string"?raw.a:null,b=typeof raw.b==="string"?raw.b:null;if(!a||!b||a===b||!ids.has(a)||!ids.has(b))throw new Error("invalid_connection");const color=raw.color===null?null:raw.color;if(!isMarkerColor(color))throw new Error("invalid_connection");const pair=normalizeConnectionPair(a,b),key=connectionKey(pair[0],pair[1]);if(seen.has(key))throw new Error("invalid_connection");seen.add(key);return {a:pair[0],b:pair[1],color}}
+function parseDiagramDocument(text){if(typeof text!=="string"||text.length>MAX_JSON_BYTES)throw new Error("invalid_size");let raw;try{raw=JSON.parse(text)}catch(error){throw new Error("invalid_json")}if(!raw||raw.schemaVersion!==SCHEMA_VERSION)throw new Error("invalid_schema");const tuningPresetId=raw.tuningPresetId;if(!TUNINGS[tuningPresetId])throw new Error("invalid_tuning");const diagramTitle=normalizeDiagramTitle(String(raw.diagramTitle??"")),startFret=Number(raw.startFret);if(!Number.isInteger(startFret)||startFret<0||startFret>MAX_FRET)throw new Error("invalid_start");if(!Array.isArray(raw.markers)||raw.markers.length>MAX_IMPORT_MARKERS)throw new Error("invalid_marker");const seenMarkers=new Set,markers=raw.markers.map(marker=>parseMarker(marker,seenMarkers)),ids=new Set(markers.map(marker=>marker.id));if(!Array.isArray(raw.connections))throw new Error("invalid_connection");const seenConnections=new Set,connections=raw.connections.map(link=>parseConnection(link,ids,seenConnections));return {content:{tuningPresetId,diagramTitle,markers,connections},startFret}}
+function importErrorMessage(error){const code=error&&error.message;return code==="invalid_json"?"Arquivo JSON inválido.":code==="invalid_schema"?"Formato de diagrama não reconhecido.":code==="invalid_tuning"?"Afinação do arquivo não é suportada.":code==="invalid_start"?"Casa inicial do arquivo é inválida.":code==="invalid_marker"?"Marcadores do arquivo são inválidos.":code==="invalid_connection"?"Ligações do arquivo são inválidas.":code==="invalid_size"?"Arquivo grande demais.":"Não foi possível importar o diagrama."}
+function applyImportedDiagram(payload){editor.linkFrom=null;editor.selectedMarkerId=null;editor.activeCustomLabel="";labelDraftFor=null;editor.diagramTitleDraft=null;const imported=cloneContent(payload.content);commitContent(content=>{content.tuningPresetId=imported.tuningPresetId;content.diagramTitle=imported.diagramTitle;content.markers=imported.markers;content.connections=imported.connections},"Diagrama importado.",null);let max=0;imported.markers.forEach(marker=>{const match=/^marker-(\d+)$/.exec(marker.id);if(match)max=Math.max(max,Number(match[1]))});markerSequence=max;setStartFret(payload.startFret,"silent")}
+function importDiagramText(text){try{applyImportedDiagram(parseDiagramDocument(text));return true}catch(error){announce(importErrorMessage(error),true);return false}}
+function importDiagramFromFile(file){if(!file){announce("Nenhum arquivo selecionado.",true);return}const reader=new FileReader();reader.onload=()=>{importDiagramText(String(reader.result??""));refs.importJsonInput.value=""};reader.onerror=()=>{announce("Não foi possível ler o arquivo.",true);refs.importJsonInput.value=""};reader.readAsText(file)}
 function exportedSvgMarkup(){const clone=refs.svg.cloneNode(true);clone.querySelectorAll("[data-editor-layer]").forEach(node=>node.remove());clone.querySelectorAll("[data-fit]").forEach(node=>node.removeAttribute("data-fit"));clone.removeAttribute("role");clone.removeAttribute("aria-labelledby");clone.setAttribute("xmlns",SVG_NS);clone.setAttribute("width",String(GEOMETRY.width));clone.setAttribute("height",String(GEOMETRY.height));return new XMLSerializer().serializeToString(clone)}
 function exportBasename(){const name=displayedDiagramTitle().replace(/[<>:"/\\|?*\u0000-\u001f]/g," ").replace(/\s+/g," ").trim().replace(/[.]+$/,"");return name||"diagrama-braco"}
 function triggerDownload(blob,fileName){let url="";try{url=URL.createObjectURL(blob);const link=document.createElement("a");link.href=url;link.download=fileName;document.body.append(link);link.click();link.remove()}finally{if(url)window.setTimeout(()=>URL.revokeObjectURL(url),0)}}
+function downloadJson(){try{triggerDownload(new Blob([serializeDiagram()],{type:"application/json;charset=utf-8"}),`${exportBasename()}.json`);announce("JSON preparado para download.")}catch(error){announce("Não foi possível gerar o JSON. Tente novamente.",true)}}
 function downloadSvg(){try{triggerDownload(new Blob([exportedSvgMarkup()],{type:"image/svg+xml;charset=utf-8"}),`${exportBasename()}.svg`);announce(`SVG preparado para download.${exportWarning()}`)}catch(error){announce("Não foi possível gerar o SVG. Tente novamente.",true)}}
 function downloadPng(){let sourceUrl="";try{sourceUrl=URL.createObjectURL(new Blob([exportedSvgMarkup()],{type:"image/svg+xml;charset=utf-8"}));const image=new Image();image.onload=()=>{try{const scale=2;const canvas=document.createElement("canvas");canvas.width=GEOMETRY.width*scale;canvas.height=GEOMETRY.height*scale;const context=canvas.getContext("2d");if(!context)throw new Error("Canvas indisponível");context.drawImage(image,0,0,canvas.width,canvas.height);canvas.toBlob(blob=>{if(!blob){announce("Não foi possível gerar o PNG. Tente novamente.",true);return}try{triggerDownload(blob,`${exportBasename()}.png`);announce(`PNG preparado para download.${exportWarning()}`)}catch(error){announce("Não foi possível baixar o PNG. Tente novamente.",true)}},"image/png")}catch(error){announce("Não foi possível gerar o PNG. Tente novamente.",true)}finally{URL.revokeObjectURL(sourceUrl)}};image.onerror=()=>{URL.revokeObjectURL(sourceUrl);announce("Não foi possível rasterizar o diagrama. Tente novamente.",true)};image.src=sourceUrl}catch(error){if(sourceUrl)URL.revokeObjectURL(sourceUrl);announce("Não foi possível gerar o PNG. Tente novamente.",true)}}
-refs.exportSvg.addEventListener("click",downloadSvg);refs.exportPng.addEventListener("click",downloadPng);
+refs.exportJson.addEventListener("click",downloadJson);refs.importJson.addEventListener("click",()=>refs.importJsonInput.click());refs.importJsonInput.addEventListener("change",event=>{const file=event.target.files?.[0];if(file)importDiagramFromFile(file)});refs.exportSvg.addEventListener("click",downloadSvg);refs.exportPng.addEventListener("click",downloadPng);
 function benchmarkRender(){const samples=[];for(let index=0;index<110;index+=1){const start=performance.now();render();if(index>=10)samples.push(performance.now()-start)}samples.sort((a,b)=>a-b);return samples[Math.ceil(samples.length*.95)-1]}
 initColorGroup();
 refs.colorGroup.addEventListener("keydown",handleColorKey);
-window.__fretboardEditor={getState:()=>({content:cloneContent(history.present),editor:{...editor}}),activatePosition,setActiveTool,createConnection,setStartFret,undo,redo,exportedSvgMarkup,render,benchmarkRender};
+window.__fretboardEditor={getState:()=>({content:cloneContent(history.present),editor:{...editor}}),activatePosition,setActiveTool,createConnection,setStartFret,undo,redo,exportedSvgMarkup,serializeDiagram,parseDiagramDocument,importDiagramText,applyImportedDiagram,render,benchmarkRender};
 render();
 if(new URLSearchParams(location.search).has("benchmark"))requestAnimationFrame(()=>announce(`Benchmark local: p95 ${benchmarkRender().toFixed(2)} ms.`));
 </script>

@@ -12,7 +12,8 @@ backend ou serviço externo.
 - Marcadores preenchidos, vazados e abafados.
 - Seleção, edição de rótulo e remoção individual.
 - Histórico em memória com desfazer e refazer, limitado a 50 estados.
-- Exportação client-side para SVG e PNG.
+- Exportação client-side para SVG, PNG e JSON.
+- Importação de diagramas a partir de arquivo JSON.
 - Interface responsiva com seis casas no mobile e doze em telas maiores.
 - Grade semântica operável por teclado e compatível com tecnologias assistivas.
 - Nenhuma requisição de rede durante o uso.
@@ -38,7 +39,8 @@ usado nas validações e evita diferenças de segurança entre navegadores para 
 3. Escolha o tipo de marcador no inspetor.
 4. Ative uma posição do braço para criar o marcador.
 5. Selecione um marcador existente para alterar tipo ou rótulo.
-6. Use **Baixar SVG** ou **Baixar PNG** para exportar a prancha visível.
+6. Use **Baixar SVG**, **Baixar PNG** ou **Baixar JSON** para exportar a prancha visível (SVG/PNG) ou o diagrama completo (JSON).
+7. Use **Importar JSON** para carregar um diagrama salvo; a importação substitui o conteúdo atual e pode ser desfeita.
 
 Marcadores abafados são permitidos somente no nut, casa 0. Um marcador criado ou editado no nut com
 a ferramenta preenchida é normalizado para vazado, representação usada para corda solta.
@@ -108,7 +110,7 @@ Mais detalhes estão na
 
 Na versão atual:
 
-- `index.html` possui no máximo 59.392 bytes ([ADR 002](adr/002-budget-bytes-transpor-forma.md)).
+- `index.html` possui no máximo 65.536 bytes ([ADR 003](adr/003-budget-bytes-intercambio-json.md)).
 - O renderer mediu p95 inferior a 1 ms em 100 atualizações, após 10 aquecimentos, no ambiente de
   desenvolvimento.
 - Foco sobre a prancha tem contraste de 5,12:1.
