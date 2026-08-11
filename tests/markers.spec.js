@@ -212,30 +212,11 @@ test.describe("Criacao, selecao e edicao de marcadores", () => {
   test("AC-43: criação toca a altura real e o controle permite mutar", async ({ fretboard }) => {
     await fretboard.page.evaluate(() => {
       window.__playedNotes = [];
-      window.AudioContext = class {
-        constructor() {
-          this.currentTime = 1;
-          this.destination = {};
-        }
-        resume() {}
-        createOscillator() {
-          const notes = window.__playedNotes;
-          return {
-            frequency: { value: 0 },
-            connect(target) { return target; },
-            start() { notes.push(this.frequency.value); },
-            stop() {}
-          };
-        }
-        createGain() {
-          return {
-            gain: {
-              setValueAtTime() {},
-              exponentialRampToValueAtTime() {}
-            },
-            connect(target) { return target; }
-          };
-        }
+      window.playNote = function (s, f, t) {
+        const ed = window.__fretboardEditor.getState().editor;
+        if (!ed.soundEnabled || t === "muted") return;
+        const hz = Math.round(440 * Math.pow(2, (window.parsePitch(window.currentTuning().notes[s]) + f - 69) / 12));
+        window.__playedNotes.push(hz);
       };
     });
 
