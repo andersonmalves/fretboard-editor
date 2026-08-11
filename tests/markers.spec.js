@@ -220,20 +220,33 @@ test.describe("Criacao, selecao e edicao de marcadores", () => {
       };
     });
 
+    // Sound starts muted.
+    await expect(fretboard.sound).toHaveAttribute("aria-pressed", "false");
+    await fretboard.activate(1, 6);
+    expect(await fretboard.page.evaluate(() => window.__playedNotes)).toEqual([]);
+
+    // Enable sound.
+    await fretboard.sound.click();
     await expect(fretboard.sound).toHaveAttribute("aria-pressed", "true");
-    await fretboard.activate(1, 5); // E4 + 5 semitons = A4, 440 Hz.
-    await fretboard.activate(1, 5); // Selecionar não repete o som.
+    await expect(fretboard.status).toContainText("Som ativado");
+
+    // Create plays a note at the correct pitch (E4 + 5 = A4, 440 Hz).
+    await fretboard.activate(1, 5);
     expect(await fretboard.page.evaluate(() => window.__playedNotes)).toEqual([440]);
 
+    // Selecting the same marker does not repeat the sound.
+    await fretboard.activate(1, 5);
+    expect(await fretboard.page.evaluate(() => window.__playedNotes)).toEqual([440]);
+
+    // Mute again — creation is silent.
     await fretboard.sound.click();
-    await expect(fretboard.sound).toHaveAttribute("aria-pressed", "false");
     await expect(fretboard.status).toContainText("Som desativado");
     expect((await fretboard.state()).editor.activeMarkerType).toBe("filled");
     await fretboard.activate(2, 5);
     expect(await fretboard.page.evaluate(() => window.__playedNotes)).toEqual([440]);
 
+    // Enable sound, but muted marker type never plays.
     await fretboard.sound.click();
-    await expect(fretboard.status).toContainText("Som ativado");
     await fretboard.pickTool("muted");
     await fretboard.activate(3, 0);
     expect(await fretboard.page.evaluate(() => window.__playedNotes)).toEqual([440]);

@@ -224,7 +224,7 @@ h1{margin:0;font-size:clamp(1.35rem,2.2vw,2rem);font-weight:680;letter-spacing:-
       <button class="button" id="transpose-down" type="button" aria-label="Transpor forma uma casa em direção ao nut" disabled>−1 casa</button>
       <button class="button" id="transpose-up" type="button" aria-label="Transpor forma uma casa em direção ao corpo" disabled>+1 casa</button>
     </div>
-    <button class="tool-bar-button sound-toggle" id="sound-toggle" type="button" aria-label="Som das notas" aria-pressed="true"><span aria-hidden="true">♪</span>Som</button><button class="button danger clear-button" id="clear-button" type="button" disabled>Limpar diagrama</button>
+    <button class="tool-bar-button sound-toggle" id="sound-toggle" type="button" aria-label="Som das notas" aria-pressed="false"><span aria-hidden="true">♪</span>Som</button><button class="button danger clear-button" id="clear-button" type="button" disabled>Limpar diagrama</button>
   </section>
 
   <div class="workspace">
@@ -323,7 +323,7 @@ const refs={
 };
 const cv=refs.grid.parentElement;
 
-const editor={startFret:0,visibleFrets:compactMedia.matches?6:12,selectedMarkerId:null,activeMarkerType:"filled",activeMarkerColor:null,activeConnectionColor:null,activeTool:"marker",linkFrom:null,activeCustomLabel:"",soundEnabled:true,diagramTitleDraft:null,focusedPosition:{stringIndex:0,fret:0}};
+const editor={startFret:0,visibleFrets:compactMedia.matches?6:12,selectedMarkerId:null,activeMarkerType:"filled",activeMarkerColor:null,activeConnectionColor:null,activeTool:"marker",linkFrom:null,activeCustomLabel:"",soundEnabled:false,diagramTitleDraft:null,focusedPosition:{stringIndex:0,fret:0}};
 const history={past:[],present:{tuningPresetId:"standard",diagramTitle:DEFAULT_DIAGRAM_TITLE,markers:[],connections:[]},future:[]};
 let markerSequence=0;
 let statusSequence=0;
