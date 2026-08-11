@@ -25,7 +25,7 @@ test.describe("AC-11: janela de casas por viewport", () => {
 
     test("nenhum conteudo essencial nasce fora da tela", async ({ fretboard }) => {
       const overflow = await fretboard.page.evaluate(() => {
-        const alvos = [...document.querySelectorAll(".grid-cell, .control, .button, .type-button")];
+        const alvos = [...document.querySelectorAll(".grid-cell, .control, .button, .tool-bar-button")];
         return alvos
           .map((el) => el.getBoundingClientRect())
           .filter((r) => r.width > 0 && (r.left < -1 || r.right > window.innerWidth + 1)).length;
@@ -83,11 +83,10 @@ test.describe("AC-12: alvos de toque", () => {
       "#undo-button",
       "#redo-button",
       "#clear-button",
-      "#export-svg",
-      "#export-png",
+      "#export-menu-toggle",
       "#remove-button",
       "#deselect-button",
-      '.type-button[data-type="filled"]'
+      '.tool-bar-button[data-type="filled"]'
     ];
 
     for (const seletor of seletores) {
@@ -125,7 +124,7 @@ test.describe("AC-33: movimento reduzido", () => {
 
   test("nenhuma transicao nao essencial permanece", async ({ fretboard }) => {
     const transicoes = await fretboard.page.evaluate(() =>
-      [...document.querySelectorAll(".button, .control, .type-button, .grid-cell, .status")]
+      [...document.querySelectorAll(".button, .control, .tool-bar-button, .grid-cell, .status")]
         .map((el) => getComputedStyle(el))
         .filter(
           (estilo) =>
@@ -151,6 +150,7 @@ test.describe("AC-23: console limpo", () => {
     await fretboard.redo.click();
     await fretboard.clear.click();
     await fretboard.undo.click();
+    await fretboard.openExportMenu();
     await Promise.all([
       fretboard.page.waitForEvent("download"),
       fretboard.exportSvg.click()

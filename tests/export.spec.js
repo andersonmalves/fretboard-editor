@@ -72,7 +72,7 @@ test.describe("Exportacao", () => {
 
     const [download] = await Promise.all([
       fretboard.page.waitForEvent("download"),
-      fretboard.exportSvg.click()
+      fretboard.downloadSvgClick()
     ]);
 
     // Titulo padrao sanitizado (barra vira espaco).
@@ -89,7 +89,7 @@ test.describe("Exportacao", () => {
 
     const [download] = await Promise.all([
       fretboard.page.waitForEvent("download"),
-      fretboard.exportPng.click()
+      fretboard.downloadPngClick()
     ]);
 
     expect(download.suggestedFilename()).toBe("FRETBOARD 06 STRING.png");
@@ -104,7 +104,7 @@ test.describe("Exportacao", () => {
 
     const [download] = await Promise.all([
       fretboard.page.waitForEvent("download"),
-      fretboard.exportSvg.click()
+      fretboard.downloadSvgClick()
     ]);
 
     expect(download.suggestedFilename()).toBe("Pentatonica A forma 1.svg");
@@ -117,7 +117,7 @@ test.describe("Exportacao", () => {
 
     const [downloadOk] = await Promise.all([
       fretboard.page.waitForEvent("download"),
-      fretboard.exportSvg.click()
+      fretboard.downloadSvgClick()
     ]);
     expect(downloadOk.suggestedFilename()).toBe("A B.svg");
 
@@ -125,7 +125,7 @@ test.describe("Exportacao", () => {
     await fretboard.setDiagramTitle("///");
     const [downloadFallback] = await Promise.all([
       fretboard.page.waitForEvent("download"),
-      fretboard.exportPng.click()
+      fretboard.downloadPngClick()
     ]);
     expect(downloadFallback.suggestedFilename()).toBe("diagrama-braco.png");
   });
@@ -133,7 +133,7 @@ test.describe("Exportacao", () => {
   test("exportar um diagrama vazio nao falha", async ({ fretboard }) => {
     const [download] = await Promise.all([
       fretboard.page.waitForEvent("download"),
-      fretboard.exportSvg.click()
+      fretboard.downloadSvgClick()
     ]);
 
     expect(download.suggestedFilename()).toBe("FRETBOARD 06 STRING.svg");
@@ -154,10 +154,12 @@ test.describe("Exportacao", () => {
     await fretboard.pickTool("filled");
     await fretboard.activate(6, 3);
 
+    await fretboard.openExportMenu();
     await fretboard.exportSvg.click();
     await expect(fretboard.status).toContainText("Não foi possível gerar o SVG");
     expect(await fretboard.markers()).toHaveLength(1);
 
+    await fretboard.openExportMenu();
     await fretboard.exportPng.click();
     await expect(fretboard.status).toContainText("Não foi possível gerar o PNG");
     expect(await fretboard.markers()).toHaveLength(1);
@@ -168,7 +170,7 @@ test.describe("Exportacao", () => {
     });
     const [download] = await Promise.all([
       page.waitForEvent("download"),
-      fretboard.exportSvg.click()
+      fretboard.downloadSvgClick()
     ]);
     expect(download.suggestedFilename()).toBe("FRETBOARD 06 STRING.svg");
   });
@@ -193,8 +195,8 @@ test.describe("Exportacao", () => {
     await fretboard.chooseTuning("open-g");
     await fretboard.startFret.fill("5");
     await fretboard.undo.click();
-    await Promise.all([page.waitForEvent("download"), fretboard.exportSvg.click()]);
-    await Promise.all([page.waitForEvent("download"), fretboard.exportPng.click()]);
+    await Promise.all([page.waitForEvent("download"), fretboard.downloadSvgClick()]);
+    await Promise.all([page.waitForEvent("download"), fretboard.downloadPngClick()]);
 
     expect(requisicoes.slice(aposCarregar)).toEqual([]);
     expect(requisicoes.filter((url) => !url.startsWith("http://127.0.0.1"))).toEqual([]);

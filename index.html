@@ -75,17 +75,15 @@ h1{margin:0;font-size:clamp(1.35rem,2.2vw,2rem);font-weight:680;letter-spacing:-
 .control,.button{min-height:var(--control-min);border:1px solid var(--color-border);border-radius:var(--radius-sm);background:var(--color-panel-raised);color:var(--color-text-primary)}
 .control{width:100%;padding:9px 11px}
 .control:hover,.button:hover:not(:disabled){border-color:var(--color-text-muted)}
-.control:focus-visible,.button:focus-visible,.type-button:focus-visible,.tool-button:focus-visible{outline:3px solid var(--color-focus);outline-offset:2px}
+.control:focus-visible,.button:focus-visible,.tool-bar-button:focus-visible{outline:3px solid var(--color-focus);outline-offset:2px}
 .button{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:9px 13px;font-weight:680;cursor:pointer;white-space:nowrap}
 .button:active:not(:disabled){transform:translateY(1px)}
 .button:disabled{color:var(--color-disabled);cursor:not-allowed}
 .button.icon{width:var(--control-min);padding:0;font-size:1.1rem}
-.button.primary{border-color:var(--color-selection);background:var(--color-selection);color:var(--color-white)}
-.button.primary:hover:not(:disabled){background:var(--color-selection-strong)}
 .button.danger{color:var(--color-destructive)}
 .command-spacer{flex:1}
 .button-cluster{display:flex;gap:var(--space-sm)}
-.history-cluster,.transpose-cluster,.clear-button,.export-cluster{margin-top:22px}.export-cluster{margin-left:auto}
+.history-cluster,.transpose-cluster,.clear-button,.actions-cluster{margin-top:22px}.actions-cluster{margin-left:auto;align-items:center}.cluster-divider{width:1px;align-self:stretch;min-height:var(--control-min);background:var(--color-border);margin:0 2px}.export-menu{position:relative}.export-popover{position:absolute;right:0;top:calc(100% + 4px);z-index:12;min-width:168px;padding:var(--space-sm);display:grid;gap:var(--space-sm);background:var(--color-panel-bg);border:1px solid var(--color-border);border-radius:var(--radius-sm);box-shadow:0 8px 20px var(--color-shadow)}.export-popover[hidden]{display:none!important}.export-menu-item:nth-child(3){border-top:1px solid var(--color-border);margin-top:2px;padding-top:var(--space-sm)}.export-menu-item{width:100%;justify-content:flex-start}
 .position-control{display:grid;grid-template-columns:var(--control-min) minmax(0,1fr) var(--control-min);gap:var(--space-sm)}
 .error{margin:4px 0 0;color:var(--color-error);font-size:.76rem}.error:empty{display:none}
 .workspace{display:grid;grid-template-columns:minmax(0,1fr) 286px;gap:var(--space-lg);align-items:start}
@@ -114,13 +112,13 @@ h1{margin:0;font-size:clamp(1.35rem,2.2vw,2rem);font-weight:680;letter-spacing:-
 .note-badge[data-long="true"]{font-size:.7rem}
 .selection-kicker{color:var(--color-text-muted);font-size:var(--text-label);text-transform:uppercase;letter-spacing:.08em}
 .selection-name{margin-top:3px;font-weight:700}
-.type-group{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-sm)}
-.type-group.tool-group{grid-template-columns:repeat(2,minmax(0,1fr))}
+.type-group{display:grid;gap:var(--space-sm)}
+.type-group.tool-bar-group{grid-template-columns:repeat(4,minmax(0,1fr))}
 .type-group.is-disabled{opacity:.45;pointer-events:none}
-.type-button,.tool-button{min-width:0;min-height:54px;border:1px solid var(--color-border);border-radius:var(--radius-sm);background:var(--color-panel-raised);color:var(--color-text-muted);cursor:pointer;font-size:.74rem;font-weight:700;line-height:1.2;white-space:normal}
-.type-button span,.tool-button span{display:block;margin-bottom:2px;font-size:1.1rem}
-.type-button[aria-pressed="true"],.tool-button[aria-pressed="true"]{border-color:var(--color-selection);background:var(--color-selection);color:var(--color-white)}
-.type-button:disabled{cursor:not-allowed}
+.tool-bar-button{min-width:0;min-height:54px;border:1px solid var(--color-border);border-radius:var(--radius-sm);background:var(--color-panel-raised);color:var(--color-text-muted);cursor:pointer;font-size:.74rem;font-weight:700;line-height:1.2;white-space:normal}
+.tool-bar-button span{display:block;margin-bottom:2px;font-size:1.1rem}
+.tool-bar-button[aria-pressed="true"]{border-color:var(--color-selection);background:var(--color-selection);color:var(--color-white)}
+.tool-bar-button:disabled{cursor:not-allowed}
 .connection-list{margin:0;padding:0;list-style:none;display:grid;gap:var(--space-sm)}
 .connection-item{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:.78rem}
 .connection-remove{min-height:var(--control-min);padding:6px var(--space-md);font-size:var(--text-label)}
@@ -137,11 +135,11 @@ kbd{display:inline-block;min-width:25px;padding:2px 5px;border:1px solid var(--c
 .status{margin:var(--space-lg) 2px 0;min-height:22px;color:var(--color-success);font-size:var(--text-body)}
 .sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
 @media(max-width:980px){
-  .command-bar{flex-wrap:wrap}.command-spacer{display:none}.workspace{grid-template-columns:1fr}.inspector{position:static}.inspector-body{grid-template-columns:minmax(180px,1fr) minmax(220px,1.4fr);align-items:start}.inspector-actions,.shortcut-list{grid-column:2}.field.tuning{flex:1}.export-cluster{margin-left:auto}
+  .command-bar{flex-wrap:wrap}.command-spacer{display:none}.workspace{grid-template-columns:1fr}.inspector{position:static}.inspector-body{grid-template-columns:minmax(180px,1fr) minmax(220px,1.4fr);align-items:start}.inspector-actions,.shortcut-list{grid-column:2}.field.tuning{flex:1}.actions-cluster{margin-left:auto}
 }
 @media(max-width:767px){
   .app{padding:12px}.masthead{align-items:center;margin-bottom:14px}.edition{display:none}.brand-mark{width:38px;height:38px}.masthead p{font-size:.78rem}
-  .command-bar{display:grid;grid-template-columns:1fr auto;padding:var(--space-md)}.field.tuning,.field.position,.field.title{width:auto;min-width:0}.field.title{grid-column:1/-1}.field.position{grid-column:1/-1}.position-control{grid-template-columns:var(--control-min) 1fr var(--control-min)}.history-cluster{grid-column:2;grid-row:1}.transpose-cluster{grid-column:1/-1;margin-top:0}.transpose-cluster .button{flex:1}.export-cluster{grid-column:1/-1;margin-top:0;display:grid;grid-template-columns:1fr 1fr;width:100%}.export-cluster .button{flex:unset;min-width:0}.clear-button{grid-column:1/-1;margin-top:0}
+  .command-bar{display:grid;grid-template-columns:1fr auto;padding:var(--space-md)}.field.tuning,.field.position,.field.title{width:auto;min-width:0}.field.title{grid-column:1/-1}.field.position{grid-column:1/-1}.position-control{grid-template-columns:var(--control-min) 1fr var(--control-min)}.actions-cluster{grid-column:2;grid-row:1;margin-top:0}.transpose-cluster{grid-column:1/-1;margin-top:0}.transpose-cluster .button{flex:1}.clear-button{grid-column:1/-1;margin-top:0}
   .workspace{gap:var(--space-md)}.panel-header{padding:11px 12px}.artboard-pad{padding:7px}.board-canvas{aspect-ratio:12/11}.board-caption{display:block}.board-caption span{display:block;text-align:left!important}
   .inspector-body{display:grid;grid-template-columns:1fr;padding:var(--space-lg)}.inspector-actions,.shortcut-list{grid-column:auto}.grid-cell{min-width:var(--control-min);min-height:var(--control-min)}.status{position:fixed;z-index:10;left:12px;right:12px;bottom:12px;margin:0;padding:11px 13px;border:1px solid var(--color-border);border-radius:var(--radius-sm);background:var(--color-panel-bg);box-shadow:0 8px 20px var(--color-shadow);opacity:0;pointer-events:none}.status.visible{opacity:1}
 }
@@ -192,22 +190,26 @@ kbd{display:inline-block;min-width:25px;padding:2px 5px;border:1px solid var(--c
       <input class="control" id="diagram-title" type="text" maxlength="48" placeholder="FRETBOARD / 06 STRING" autocomplete="off">
     </div>
     <div class="command-spacer"></div>
-    <div class="button-cluster history-cluster" aria-label="Histórico">
+    <div class="button-cluster actions-cluster" aria-label="Histórico e exportação">
       <button class="button icon" id="undo-button" type="button" aria-label="Desfazer" title="Desfazer (Ctrl ou ⌘ + Z)" disabled>↶</button>
       <button class="button icon" id="redo-button" type="button" aria-label="Refazer" title="Refazer (Ctrl ou ⌘ + Shift + Z)" disabled>↷</button>
+      <div class="cluster-divider" aria-hidden="true"></div>
+      <div class="export-menu">
+        <button class="button" id="export-menu-toggle" type="button" aria-expanded="false" aria-haspopup="menu">Exportar <span aria-hidden="true">▾</span></button>
+        <div class="export-popover" id="export-popover" role="menu" hidden>
+          <button class="button export-menu-item" id="export-json" type="button" role="menuitem">Baixar JSON</button>
+          <button class="button export-menu-item" id="import-json" type="button" role="menuitem">Importar JSON</button>
+          <button class="button export-menu-item" id="export-svg" type="button" role="menuitem">Baixar SVG</button>
+          <button class="button export-menu-item" id="export-png" type="button" role="menuitem">Baixar PNG</button>
+        </div>
+      </div>
+      <input hidden id="import-json-input" type="file" accept="application/json,.json">
     </div>
     <div class="button-cluster transpose-cluster" aria-label="Transpor forma">
       <button class="button" id="transpose-down" type="button" aria-label="Transpor forma uma casa em direção ao nut" disabled>−1 casa</button>
       <button class="button" id="transpose-up" type="button" aria-label="Transpor forma uma casa em direção ao corpo" disabled>+1 casa</button>
     </div>
     <button class="button danger clear-button" id="clear-button" type="button" disabled>Limpar diagrama</button>
-    <div class="button-cluster export-cluster">
-      <button class="button" id="export-json" type="button">Baixar JSON</button>
-      <button class="button" id="import-json" type="button">Importar JSON</button>
-      <button class="button" id="export-svg" type="button">Baixar SVG</button>
-      <button class="button primary" id="export-png" type="button">Baixar PNG</button>
-      <input hidden id="import-json-input" type="file" accept="application/json,.json">
-    </div>
   </section>
 
   <div class="workspace">
@@ -229,13 +231,13 @@ kbd{display:inline-block;min-width:25px;padding:2px 5px;border:1px solid var(--c
           <div class="note-badge" id="note-badge" aria-hidden="true">—</div>
           <div><div class="selection-kicker" id="selection-kicker">Nenhum marcador</div><div class="selection-name" id="selection-name">Escolha uma posição</div></div>
         </div>
-        <div class="field"><span class="field-label" id="tool-label">Ferramenta</span><div class="type-group tool-group" role="group" aria-labelledby="tool-label"><button class="tool-button" type="button" data-tool="marker" aria-pressed="true"><span aria-hidden="true">●</span>Marcador</button><button class="tool-button" type="button" data-tool="connect" aria-pressed="false"><span aria-hidden="true">╱</span>Ligar</button></div></div>
         <div class="field">
-          <span class="field-label" id="type-label">Tipo do marcador</span>
-          <div class="type-group marker-type-group" aria-labelledby="type-label">
-            <button class="type-button" type="button" data-type="filled" aria-pressed="true"><span aria-hidden="true">●</span>Preenchido</button>
-            <button class="type-button" type="button" data-type="outline" aria-pressed="false"><span aria-hidden="true">○</span>Vazado</button>
-            <button class="type-button" type="button" data-type="muted" aria-pressed="false"><span aria-hidden="true">×</span>Abafado</button>
+          <span class="field-label" id="marker-tool-label">Marcador</span>
+          <div class="type-group tool-bar-group" id="marker-tool-bar" role="toolbar" aria-labelledby="marker-tool-label">
+            <button class="tool-bar-button" type="button" data-type="filled" aria-pressed="true"><span aria-hidden="true">●</span>Preenchido</button>
+            <button class="tool-bar-button" type="button" data-type="outline" aria-pressed="false"><span aria-hidden="true">○</span>Vazado</button>
+            <button class="tool-bar-button" type="button" data-type="muted" aria-pressed="false"><span aria-hidden="true">×</span>Abafado</button>
+            <button class="tool-bar-button" type="button" data-tool="connect" aria-pressed="false"><span aria-hidden="true">╱</span>Ligar</button>
           </div>
         </div>
         <div class="field">
@@ -304,14 +306,14 @@ const refs={
   previous:document.querySelector("#previous-fret"),next:document.querySelector("#next-fret"),undo:document.querySelector("#undo-button"),redo:document.querySelector("#redo-button"),
   transposeDown:document.querySelector("#transpose-down"),transposeUp:document.querySelector("#transpose-up"),
   clear:document.querySelector("#clear-button"),remove:document.querySelector("#remove-button"),deselect:document.querySelector("#deselect-button"),
-  exportSvg:document.querySelector("#export-svg"),exportPng:document.querySelector("#export-png"),exportJson:document.querySelector("#export-json"),importJson:document.querySelector("#import-json"),importJsonInput:document.querySelector("#import-json-input"),label:document.querySelector("#label-input"),
+  exportSvg:document.querySelector("#export-svg"),exportPng:document.querySelector("#export-png"),exportJson:document.querySelector("#export-json"),importJson:document.querySelector("#import-json"),importJsonInput:document.querySelector("#import-json-input"),exportMenuToggle:document.querySelector("#export-menu-toggle"),exportPopover:document.querySelector("#export-popover"),label:document.querySelector("#label-input"),
   readout:document.querySelector("#window-readout"),coordinate:document.querySelector("#selection-coordinate"),badge:document.querySelector("#note-badge"),
   kicker:document.querySelector("#selection-kicker"),selectionName:document.querySelector("#selection-name"),status:document.querySelector("#status"),
   hint:document.querySelector("#board-hint"),
   colorGroup:document.querySelector("#color-group"),
   diagramTitle:document.querySelector("#diagram-title"),
   colorLabel:document.querySelector("#color-label"),
-  markerTypeGroup:document.querySelector(".marker-type-group"),
+  markerToolBar:document.querySelector("#marker-tool-bar"),
   connectionField:document.querySelector("#connection-field"),
   connectionList:document.querySelector("#connection-list")
 };
@@ -370,7 +372,8 @@ function commitContent(mutator,message,preferredSelection){
 function undo(){if(!history.past.length){announce("Nada para desfazer.",true);return}labelDraftFor=null;editor.diagramTitleDraft=null;const current=cloneContent(history.present);const target=history.past.pop();history.future.unshift(current);if(history.future.length>HISTORY_LIMIT)history.future.pop();history.present=target;const restored=target.markers.filter(marker=>!current.markers.some(item=>item.id===marker.id));editor.selectedMarkerId=restored.length===1?restored[0].id:null;render();announce("Ação desfeita.")}
 function redo(){if(!history.future.length){announce("Nada para refazer.",true);return}labelDraftFor=null;editor.diagramTitleDraft=null;const current=cloneContent(history.present);const target=history.future.shift();history.past.push(current);if(history.past.length>HISTORY_LIMIT)history.past.shift();history.present=target;const added=target.markers.filter(marker=>!current.markers.some(item=>item.id===marker.id));editor.selectedMarkerId=added.length===1?added[0].id:null;render();announce("Ação refeita.")}
 
-function setActiveType(type){editor.activeMarkerType=type;document.querySelectorAll(".type-button").forEach(button=>button.setAttribute("aria-pressed",String(button.dataset.type===type)))}
+function syncToolBarButtons(){document.querySelectorAll(".tool-bar-button").forEach(button=>{if(button.dataset.tool==="connect")button.setAttribute("aria-pressed",String(editor.activeTool==="connect"));else if(button.dataset.type)button.setAttribute("aria-pressed",String(editor.activeTool==="marker"&&button.dataset.type===editor.activeMarkerType))})}
+function setActiveType(type){editor.activeMarkerType=type;syncToolBarButtons()}
 function syncColorSwatches(color){refs.colorGroup.querySelectorAll(".color-swatch").forEach(swatch=>{const checked=swatch.dataset.color===String(color??"");swatch.setAttribute("aria-checked",String(checked));swatch.setAttribute("tabindex",checked?"0":"-1")})}
 function setActiveMarkerColor(color){editor.activeMarkerColor=color;if(editor.activeTool==="marker")syncColorSwatches(color)}
 function setActiveConnectionColor(color){editor.activeConnectionColor=color;if(editor.activeTool==="connect")syncColorSwatches(color)}
@@ -378,7 +381,7 @@ function applyColorChoice(color,label){if(editor.activeTool==="connect"){setActi
 function colorChoiceFromSwatch(swatch){return MARKER_COLORS.find(entry=>String(entry.value??"")===swatch.dataset.color)||null}
 function initColorGroup(){const fragment=document.createDocumentFragment();MARKER_COLORS.forEach(entry=>{const btn=document.createElement("button");btn.type="button";btn.className="color-swatch";btn.style.backgroundColor=cssTokenColor(entry.token);btn.dataset.color=entry.value??"";btn.setAttribute("role","radio");btn.setAttribute("aria-checked","false");btn.setAttribute("tabindex","-1");btn.setAttribute("aria-label",entry.label);btn.addEventListener("click",()=>applyColorChoice(entry.value,entry.label));fragment.append(btn)});refs.colorGroup.append(fragment);setActiveMarkerColor(editor.activeMarkerColor)}
 function handleColorKey(event){const swatches=[...refs.colorGroup.querySelectorAll(".color-swatch")];const index=swatches.findIndex(swatch=>swatch.getAttribute("tabindex")==="0");if(index<0)return;if(event.key==="ArrowRight"||event.key==="ArrowDown"){event.preventDefault();const next=swatches[(index+1)%swatches.length];const choice=colorChoiceFromSwatch(next);if(choice)applyColorChoice(choice.value,choice.label);next.focus()}else if(event.key==="ArrowLeft"||event.key==="ArrowUp"){event.preventDefault();const previous=swatches[(index-1+swatches.length)%swatches.length];const choice=colorChoiceFromSwatch(previous);if(choice)applyColorChoice(choice.value,choice.label);previous.focus()}else if(event.key===" "||event.key==="Enter"){event.preventDefault();const choice=colorChoiceFromSwatch(swatches[index]);if(choice)applyColorChoice(choice.value,choice.label)}}
-function setActiveTool(tool){editor.activeTool=tool;editor.linkFrom=null;document.querySelectorAll(".tool-button").forEach(button=>button.setAttribute("aria-pressed",String(button.dataset.tool===tool)));const disabled=tool==="connect";document.querySelectorAll(".type-button").forEach(button=>{button.disabled=disabled});refs.markerTypeGroup.classList.toggle("is-disabled",disabled);refs.colorLabel.textContent=tool==="connect"?"Cor da ligação":"Cor";syncColorSwatches(tool==="connect"?editor.activeConnectionColor:editor.activeMarkerColor);render();announce(tool==="connect"?"Ferramenta Ligar ativa.":"Ferramenta Marcador ativa.")}
+function setActiveTool(tool,silent=false){editor.activeTool=tool;editor.linkFrom=null;syncToolBarButtons();const d=tool==="connect";document.querySelectorAll(".tool-bar-button[data-type]").forEach(b=>{b.disabled=d});refs.markerToolBar.classList.toggle("is-disabled",d);refs.colorLabel.textContent=d?"Cor da ligação":"Cor";syncColorSwatches(d?editor.activeConnectionColor:editor.activeMarkerColor);render();if(!silent)announce(d?"Ferramenta Ligar ativa.":"Ferramenta Marcador ativa.")}
 function createConnection(fromId,toId){const pair=normalizeConnectionPair(fromId,toId);if(!pair){announce("Escolha dois marcadores diferentes.",true);return}const [a,b]=pair;if(!markerById(a)||!markerById(b)){announce("Marcadores inválidos.",true);return}const key=connectionKey(a,b);if(history.present.connections.some(link=>connectionKey(link.a,link.b)===key)){editor.linkFrom=null;render();announce("Ligação já existe.",true);return}const dest=markerById(b);editor.linkFrom=null;commitContent(content=>content.connections.push({a,b,color:editor.activeConnectionColor}),`Ligação criada (${dest.stringIndex+1}/${dest.fret===0?"nut":dest.fret}).`,b)}
 function removeConnection(a,b){commitContent(content=>{content.connections=content.connections.filter(link=>!(link.a===a&&link.b===b))},"Ligação removida.",editor.selectedMarkerId)}
 function activateConnectMarker(marker){editor.selectedMarkerId=marker.id;if(!editor.linkFrom){editor.linkFrom=marker.id;render();announce(`Origem: ${marker.stringIndex+1}/${marker.fret===0?"nut":marker.fret}. Escolha o destino.`);return}if(editor.linkFrom===marker.id){editor.linkFrom=null;render();announce("Origem cancelada.");return}createConnection(editor.linkFrom,marker.id)}
@@ -481,8 +484,7 @@ cv.addEventListener("pointerup",endPan);cv.addEventListener("pointercancel",endP
 refs.tuning.addEventListener("change",event=>{const id=event.target.value;if(!TUNINGS[id]){announce("Afinação inválida. Nenhuma alteração foi aplicada.",true);refs.tuning.value=history.present.tuningPresetId;return}commitContent(content=>{content.tuningPresetId=id},`Afinação alterada para ${TUNINGS[id].name}.`,editor.selectedMarkerId)});
 refs.start.addEventListener("input",event=>setStartFret(event.target.value));refs.previous.addEventListener("click",()=>setStartFret(editor.startFret-1));refs.next.addEventListener("click",()=>setStartFret(editor.startFret+1));
 refs.undo.addEventListener("click",undo);refs.redo.addEventListener("click",redo);refs.transposeDown.addEventListener("click",()=>transposeShape(-1));refs.transposeUp.addEventListener("click",()=>transposeShape(1));refs.clear.addEventListener("click",clearDiagram);refs.remove.addEventListener("click",removeSelected);refs.deselect.addEventListener("click",deselect);
-document.querySelectorAll(".tool-button").forEach(button=>button.addEventListener("click",()=>setActiveTool(button.dataset.tool)));
-document.querySelectorAll(".type-button").forEach(button=>button.addEventListener("click",()=>{const requested=button.dataset.type;const marker=selectedMarker();setActiveType(requested);if(!marker){announce(`Ferramenta ${TYPE_NAMES[requested]} ativa.`);return}if(requested==="muted"&&marker.fret!==0){announce(`${MUTED_ONLY_AT_NUT} Ferramenta abafado ativa para o próximo marcador.`,true);return}const type=normalizeType(requested,marker.fret);if(type!==requested){announce(FILLED_NORMALIZED_AT_NUT);if(marker.type===type){setActiveType(type);return}}editSelected({type},`Marcador alterado para ${TYPE_NAMES[type]}.`)}));
+document.querySelectorAll(".tool-bar-button").forEach(b=>b.addEventListener("click",()=>{if(b.dataset.tool==="connect"){setActiveTool("connect");return}const t=b.dataset.type;if(editor.activeTool!=="marker")setActiveTool("marker",true);const m=selectedMarker();setActiveType(t);if(!m){announce(`Ferramenta ${TYPE_NAMES[t]} ativa.`);return}if(t==="muted"&&m.fret!==0){announce(`${MUTED_ONLY_AT_NUT} Ferramenta abafado ativa para o próximo marcador.`,true);return}const type=normalizeType(t,m.fret);if(type!==t){announce(FILLED_NORMALIZED_AT_NUT);if(m.type===type){setActiveType(type);return}}editSelected({type},`Marcador alterado para ${TYPE_NAMES[type]}.`)}));
 refs.label.addEventListener("input",event=>{const clean=normalizeLabel(event.target.value);editor.activeCustomLabel=clean;if(event.target.value!==clean)event.target.value=clean;const marker=selectedMarker();if(!marker||marker.customLabel===clean)return;const message=clean?`Rótulo alterado para ${clean}.`:"Rótulo automático restaurado.";if(labelDraftFor===marker.id){history.present.markers.find(item=>item.id===marker.id).customLabel=clean;render();announce(message);return}editSelected({customLabel:clean},message);labelDraftFor=marker.id});
 refs.label.addEventListener("blur",()=>{labelDraftFor=null});
 refs.diagramTitle.addEventListener("focus",()=>{editor.diagramTitleDraft=history.present.diagramTitle});
@@ -507,9 +509,11 @@ function triggerDownload(blob,fileName){let url="";try{url=URL.createObjectURL(b
 function downloadJson(){try{triggerDownload(new Blob([serializeDiagram()],{type:"application/json;charset=utf-8"}),`${exportBasename()}.json`);announce("JSON preparado para download.")}catch(error){announce("Não foi possível gerar o JSON. Tente novamente.",true)}}
 function downloadSvg(){try{triggerDownload(new Blob([exportedSvgMarkup()],{type:"image/svg+xml;charset=utf-8"}),`${exportBasename()}.svg`);announce(`SVG preparado para download.${exportWarning()}`)}catch(error){announce("Não foi possível gerar o SVG. Tente novamente.",true)}}
 function downloadPng(){let sourceUrl="";try{sourceUrl=URL.createObjectURL(new Blob([exportedSvgMarkup()],{type:"image/svg+xml;charset=utf-8"}));const image=new Image();image.onload=()=>{try{const scale=2;const canvas=document.createElement("canvas");canvas.width=GEOMETRY.width*scale;canvas.height=GEOMETRY.height*scale;const context=canvas.getContext("2d");if(!context)throw new Error("Canvas indisponível");context.drawImage(image,0,0,canvas.width,canvas.height);canvas.toBlob(blob=>{if(!blob){announce("Não foi possível gerar o PNG. Tente novamente.",true);return}try{triggerDownload(blob,`${exportBasename()}.png`);announce(`PNG preparado para download.${exportWarning()}`)}catch(error){announce("Não foi possível baixar o PNG. Tente novamente.",true)}},"image/png")}catch(error){announce("Não foi possível gerar o PNG. Tente novamente.",true)}finally{URL.revokeObjectURL(sourceUrl)}};image.onerror=()=>{URL.revokeObjectURL(sourceUrl);announce("Não foi possível rasterizar o diagrama. Tente novamente.",true)};image.src=sourceUrl}catch(error){if(sourceUrl)URL.revokeObjectURL(sourceUrl);announce("Não foi possível gerar o PNG. Tente novamente.",true)}}
-refs.exportJson.addEventListener("click",downloadJson);refs.importJson.addEventListener("click",()=>refs.importJsonInput.click());refs.importJsonInput.addEventListener("change",event=>{const file=event.target.files?.[0];if(file)importDiagramFromFile(file)});refs.exportSvg.addEventListener("click",downloadSvg);refs.exportPng.addEventListener("click",downloadPng);
+function initExportMenu(){const p=refs.exportPopover,t=refs.exportMenuToggle;const close=()=>{p.hidden=true;t.setAttribute("aria-expanded","false")};t.addEventListener("click",()=>p.hidden?(p.hidden=false,t.setAttribute("aria-expanded","true"),p.querySelector("[role=menuitem]")?.focus()):close());document.addEventListener("click",e=>{if(p.hidden||p.contains(e.target)||t.contains(e.target))return;close()});document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!p.hidden){close();t.focus()}});p.addEventListener("keydown",e=>{const items=[...p.querySelectorAll("[role=menuitem]")],i=items.indexOf(document.activeElement);if(e.key==="ArrowDown"){e.preventDefault();items[(i+1)%items.length]?.focus()}else if(e.key==="ArrowUp"){e.preventDefault();items[(i-1+items.length)%items.length]?.focus()}else if((e.key===" "||e.key==="Enter")&&document.activeElement?.getAttribute("role")==="menuitem"){e.preventDefault();document.activeElement?.click()}})}
+refs.exportJson.addEventListener("click",()=>{refs.exportPopover.hidden=true;refs.exportMenuToggle.setAttribute("aria-expanded","false");downloadJson()});refs.importJson.addEventListener("click",()=>{refs.exportPopover.hidden=true;refs.exportMenuToggle.setAttribute("aria-expanded","false");refs.importJsonInput.click()});refs.importJsonInput.addEventListener("change",e=>{const file=e.target.files?.[0];if(file)importDiagramFromFile(file)});refs.exportSvg.addEventListener("click",()=>{refs.exportPopover.hidden=true;refs.exportMenuToggle.setAttribute("aria-expanded","false");downloadSvg()});refs.exportPng.addEventListener("click",()=>{refs.exportPopover.hidden=true;refs.exportMenuToggle.setAttribute("aria-expanded","false");downloadPng()});
 function benchmarkRender(){const samples=[];for(let index=0;index<110;index+=1){const start=performance.now();render();if(index>=10)samples.push(performance.now()-start)}samples.sort((a,b)=>a-b);return samples[Math.ceil(samples.length*.95)-1]}
 initColorGroup();
+initExportMenu();
 refs.colorGroup.addEventListener("keydown",handleColorKey);
 window.__fretboardEditor={getState:()=>({content:cloneContent(history.present),editor:{...editor}}),activatePosition,setActiveTool,createConnection,setStartFret,undo,redo,exportedSvgMarkup,serializeDiagram,parseDiagramDocument,importDiagramText,applyImportedDiagram,render,benchmarkRender};
 render();

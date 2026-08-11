@@ -34,6 +34,8 @@ class FretboardPage {
     this.exportJson = page.locator("#export-json");
     this.importJson = page.locator("#import-json");
     this.importJsonInput = page.locator("#import-json-input");
+    this.exportMenuToggle = page.locator("#export-menu-toggle");
+    this.exportPopover = page.locator("#export-popover");
     this.status = page.locator("#status");
     this.readout = page.locator("#window-readout");
     this.badge = page.locator("#note-badge");
@@ -89,19 +91,42 @@ class FretboardPage {
   }
 
   toolButton(tipo) {
-    return this.page.locator(`.type-button[data-type="${tipo}"]`);
+    return this.page.locator(`.tool-bar-button[data-type="${tipo}"]`);
   }
 
   workToolButton(tool) {
-    return this.page.locator(`.tool-button[data-tool="${tool}"]`);
+    return this.page.locator(`.tool-bar-button[data-tool="${tool}"]`);
+  }
+
+  async openExportMenu() {
+    if (await this.exportPopover.isHidden()) await this.exportMenuToggle.click();
+    await expect(this.exportPopover).toBeVisible();
+  }
+
+  async downloadSvgClick() {
+    await this.openExportMenu();
+    await this.exportSvg.click();
+  }
+
+  async downloadPngClick() {
+    await this.openExportMenu();
+    await this.exportPng.click();
+  }
+
+  async downloadJsonClick() {
+    await this.openExportMenu();
+    await this.exportJson.click();
   }
 
   async pickWorkTool(tool) {
-    await this.workToolButton(tool).click();
+    const button = this.workToolButton(tool);
+    await button.scrollIntoViewIfNeeded();
+    await button.click();
   }
 
   async connectMarkers(cordaA, casaA, cordaB, casaB) {
-    await this.pickWorkTool("connect");
+    const { editor } = await this.state();
+    if (editor.activeTool !== "connect") await this.pickWorkTool("connect");
     await this.activate(cordaA, casaA);
     await this.activate(cordaB, casaB);
   }
@@ -139,7 +164,9 @@ class FretboardPage {
    */
   async pickTool(tipo) {
     if (await this.deselect.isEnabled()) await this.deselect.click();
-    await this.toolButton(tipo).click();
+    const button = this.toolButton(tipo);
+    await button.scrollIntoViewIfNeeded();
+    await button.click();
   }
 
   async setLabel(texto) {

@@ -32,7 +32,7 @@ test.describe("Intercambio JSON", () => {
 
     const [download] = await Promise.all([
       fretboard.page.waitForEvent("download"),
-      fretboard.exportJson.click()
+      fretboard.downloadJsonClick()
     ]);
 
     expect(download.suggestedFilename()).toBe("Pentatonica A forma 1.json");
@@ -158,6 +158,7 @@ test.describe("Intercambio JSON", () => {
       "accept",
       "application/json,.json"
     );
+    await fretboard.openExportMenu();
     const box = await fretboard.importJson.boundingBox();
     expect(box.width).toBeGreaterThanOrEqual(44);
     expect(box.height).toBeGreaterThanOrEqual(44);

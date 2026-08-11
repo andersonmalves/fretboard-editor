@@ -105,7 +105,7 @@ test.describe("Posicao do braco e marcadores fora da janela", () => {
       await fretboard.pickTool("filled");
       await fretboard.activate(3, 5);
 
-      await expect(fretboard.hint).toHaveText("Nota calculada pela afinação");
+      await expect(fretboard.hint).toHaveText("Arraste horizontalmente para mover a janela · nota pela afinação");
       await expect(fretboard.hint).not.toHaveClass(/offscreen/);
     });
 
@@ -148,7 +148,7 @@ test.describe("Posicao do braco e marcadores fora da janela", () => {
       await fretboard.activate(3, 5);
       await fretboard.startFret.fill("9");
 
-      await Promise.all([fretboard.page.waitForEvent("download"), fretboard.exportSvg.click()]);
+      await Promise.all([fretboard.page.waitForEvent("download"), fretboard.downloadSvgClick()]);
 
       await expect(fretboard.status).toContainText("SVG preparado para download.");
       await expect(fretboard.status).toContainText(
@@ -162,7 +162,7 @@ test.describe("Posicao do braco e marcadores fora da janela", () => {
       await fretboard.activate(4, 6);
       await fretboard.startFret.fill("9");
 
-      await Promise.all([fretboard.page.waitForEvent("download"), fretboard.exportPng.click()]);
+      await Promise.all([fretboard.page.waitForEvent("download"), fretboard.downloadPngClick()]);
 
       await expect(fretboard.status).toContainText(
         "2 marcadores fora da janela não entraram no arquivo"
@@ -173,7 +173,7 @@ test.describe("Posicao do braco e marcadores fora da janela", () => {
       await fretboard.pickTool("filled");
       await fretboard.activate(3, 5);
 
-      await Promise.all([fretboard.page.waitForEvent("download"), fretboard.exportSvg.click()]);
+      await Promise.all([fretboard.page.waitForEvent("download"), fretboard.downloadSvgClick()]);
 
       await expect(fretboard.status).toContainText("SVG preparado para download.");
       await expect(fretboard.status).not.toContainText("fora da janela");
@@ -189,7 +189,7 @@ test.describe("Posicao do braco e marcadores fora da janela", () => {
 
       await fretboard.startFret.fill("0");
 
-      await expect(fretboard.hint).toHaveText("Nota calculada pela afinação");
+      await expect(fretboard.hint).toHaveText("Arraste horizontalmente para mover a janela · nota pela afinação");
       await expect(fretboard.hint).not.toHaveClass(/offscreen/);
     });
 
@@ -201,7 +201,7 @@ test.describe("Posicao do braco e marcadores fora da janela", () => {
 
       await fretboard.clear.click();
 
-      await expect(fretboard.hint).toHaveText("Nota calculada pela afinação");
+      await expect(fretboard.hint).toHaveText("Arraste horizontalmente para mover a janela · nota pela afinação");
     });
   });
 });
