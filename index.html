@@ -199,7 +199,7 @@ kbd{display:inline-block;min-width:25px;padding:2px 5px;border:1px solid var(--c
       <button class="button" id="transpose-down" type="button" aria-label="Transpor forma uma casa em direção ao nut" disabled>−1 casa</button>
       <button class="button" id="transpose-up" type="button" aria-label="Transpor forma uma casa em direção ao corpo" disabled>+1 casa</button>
     </div>
-    <button class="button danger clear-button" id="clear-button" type="button" disabled>Limpar</button>
+    <button class="button danger clear-button" id="clear-button" type="button" disabled>Limpar diagrama</button>
     <div class="button-cluster export-cluster">
       <button class="button" id="export-json" type="button">Baixar JSON</button>
       <button class="button" id="import-json" type="button">Importar JSON</button>
@@ -248,7 +248,7 @@ kbd{display:inline-block;min-width:25px;padding:2px 5px;border:1px solid var(--c
         </div>
         <div class="field" id="connection-field" hidden><span class="field-label">Ligações</span><ul class="connection-list" id="connection-list"></ul></div>
         <div class="inspector-actions">
-          <button class="button danger" id="remove-button" type="button" disabled>Remover</button>
+          <button class="button danger" id="remove-button" type="button" disabled>Remover marcador</button>
           <button class="button" id="deselect-button" type="button" disabled>Desmarcar</button>
         </div>
         <dl class="shortcut-list"><dt><kbd>↑↓←→</kbd></dt><dd>Navegar</dd><dt>Arrastar</dt><dd>Mover janela</dd><dt><kbd>Enter</kbd></dt><dd>Criar ou selecionar</dd><dt><kbd>Delete</kbd></dt><dd>Remover seleção</dd><dt><kbd>Esc</kbd></dt><dd>Desmarcar</dd></dl>
@@ -463,7 +463,7 @@ function handleGridKey(event){const stringIndex=Number(event.currentTarget.datas
 
 function mirrorLabel(value){if(refs.label.value!==value)refs.label.value=value}
 function mirrorDiagramTitle(value){if(refs.diagramTitle.value!==value)refs.diagramTitle.value=value}
-function renderConnectionList(marker){if(!marker||!connectionsForMarker(marker.id).length){refs.connectionField.hidden=true;refs.connectionList.replaceChildren();return}refs.connectionField.hidden=false;const fragment=document.createDocumentFragment();connectionsForMarker(marker.id).forEach(link=>{const item=document.createElement("li");item.className="connection-item";const label=document.createElement("span");label.textContent=linkLabel(link,marker.id);const button=document.createElement("button");button.type="button";button.className="button danger connection-remove";button.textContent="Remover";button.addEventListener("click",()=>removeConnection(link.a,link.b));item.append(label,button);fragment.append(item)});refs.connectionList.replaceChildren(fragment)}
+function renderConnectionList(marker){if(!marker||!connectionsForMarker(marker.id).length){refs.connectionField.hidden=true;refs.connectionList.replaceChildren();return}refs.connectionField.hidden=false;const fragment=document.createDocumentFragment();connectionsForMarker(marker.id).forEach(link=>{const item=document.createElement("li");item.className="connection-item";const label=document.createElement("span");label.textContent=linkLabel(link,marker.id);const button=document.createElement("button");button.type="button";button.className="button danger connection-remove";button.textContent="Remover ligação";button.addEventListener("click",()=>removeConnection(link.a,link.b));item.append(label,button);fragment.append(item)});refs.connectionList.replaceChildren(fragment)}
 function renderInspector(){
   const marker=selectedMarker();const hasMarkers=history.present.markers.length;const hasContent=hasMarkers||history.present.connections.length;refs.remove.disabled=!marker;refs.deselect.disabled=!marker&&!editor.linkFrom;refs.clear.disabled=!hasContent;refs.undo.disabled=!history.past.length;refs.redo.disabled=!history.future.length;refs.transposeDown.disabled=!hasMarkers;refs.transposeUp.disabled=!hasMarkers;refs.previous.disabled=editor.startFret===0;refs.next.disabled=editor.startFret>=maxStartFret();
   if(marker){const note=noteAt(marker.stringIndex,marker.fret);const shown=displayLabel(marker);editor.activeCustomLabel=marker.customLabel;if(editor.activeTool==="marker"){setActiveType(marker.type);setActiveMarkerColor(marker.color??null)}refs.badge.textContent=shown;refs.badge.dataset.long=String(shown.length>3);refs.kicker.textContent=marker.customLabel?`Rótulo ${marker.customLabel} · nota ${spokenNote(note)}`:`Nota ${spokenNote(note)}`;refs.selectionName.textContent=`Corda ${marker.stringIndex+1} · ${marker.fret===0?"nut":`casa ${marker.fret}`}`;refs.coordinate.textContent=`S${marker.stringIndex+1} / F${String(marker.fret).padStart(2,"0")}`;mirrorLabel(marker.customLabel)}else{refs.badge.textContent="—";refs.badge.dataset.long="false";refs.kicker.textContent=editor.activeTool==="connect"?"Modo ligar":"Nenhum marcador";refs.selectionName.textContent=editor.linkFrom?"Escolha o destino":"Escolha uma posição";refs.coordinate.textContent="—";mirrorLabel(editor.activeCustomLabel)}

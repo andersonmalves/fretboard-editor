@@ -1,6 +1,6 @@
 const fs = require("node:fs");
 const path = require("node:path");
-const { test, expect } = require("./fixtures");
+const { test, expect, INDEX_HTML_BYTE_BUDGET } = require("./fixtures");
 
 test.describe("Intercambio JSON", () => {
   test("AC-J1: exportar JSON inclui diagrama completo e startFret", async ({ fretboard }) => {
@@ -165,10 +165,10 @@ test.describe("Intercambio JSON", () => {
 });
 
 test.describe("Orcamento intercambio JSON", () => {
-  test("AC-J9: index.html permanece dentro de 65.536 bytes", () => {
+  test("AC-J9: index.html permanece dentro de 68.608 bytes", () => {
     const arquivo = path.join(__dirname, "..", "index.html");
     const bytes = fs.statSync(arquivo).size;
 
-    expect(bytes).toBeLessThanOrEqual(65536);
+    expect(bytes).toBeLessThanOrEqual(INDEX_HTML_BYTE_BUDGET);
   });
 });

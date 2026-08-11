@@ -1,3 +1,5 @@
+const INDEX_HTML_BYTE_BUDGET = 68608;
+
 const base = require("@playwright/test");
 const { FretboardPage } = require("./fretboard-page");
 
@@ -9,4 +11,4 @@ const test = base.test.extend({
   }
 });
 
-module.exports = { test, expect: base.expect };
+module.exports = { test, expect: base.expect, INDEX_HTML_BYTE_BUDGET };

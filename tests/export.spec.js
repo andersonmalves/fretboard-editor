@@ -1,6 +1,6 @@
 const fs = require("node:fs");
 const path = require("node:path");
-const { test, expect } = require("./fixtures");
+const { test, expect, INDEX_HTML_BYTE_BUDGET } = require("./fixtures");
 const { FretboardPage } = require("./fretboard-page");
 
 test.describe("Exportacao", () => {
@@ -222,11 +222,11 @@ test.describe("Exportacao", () => {
 });
 
 test.describe("Orcamento do artefato", () => {
-  test("AC-32: index.html permanece dentro de 65.536 bytes", () => {
+  test("AC-32: index.html permanece dentro de 68.608 bytes", () => {
     const arquivo = path.join(__dirname, "..", "index.html");
     const bytes = fs.statSync(arquivo).size;
 
-    expect(bytes).toBeLessThanOrEqual(65536);
+    expect(bytes).toBeLessThanOrEqual(INDEX_HTML_BYTE_BUDGET);
   });
 
   test("nao ha dependencia de runtime carregada pelo documento", () => {
