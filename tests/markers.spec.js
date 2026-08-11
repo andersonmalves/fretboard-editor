@@ -184,6 +184,16 @@ test.describe("Criacao, selecao e edicao de marcadores", () => {
     await expect(fretboard.toolButton("muted")).toHaveAttribute("aria-pressed", "false");
   });
 
+  test("um estilo de marcador encerra o modo ligar", async ({ fretboard }) => {
+    await fretboard.pickWorkTool("connect");
+    await expect(fretboard.toolHint).toHaveText("Escolha um estilo para voltar a marcar");
+    await fretboard.toolButton("outline").click();
+
+    expect((await fretboard.state()).editor.activeTool).toBe("marker");
+    await expect(fretboard.toolButton("outline")).toHaveAttribute("aria-pressed", "true");
+    await expect(fretboard.toolHint).toHaveText("Define o próximo marcador");
+  });
+
   test("AC-16: a regiao viva anuncia criacao, edicao e remocao", async ({ fretboard }) => {
     await expect(fretboard.status).toHaveAttribute("aria-live", "polite");
 

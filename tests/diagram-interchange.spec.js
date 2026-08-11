@@ -166,7 +166,7 @@ test.describe("Intercambio JSON", () => {
 });
 
 test.describe("Orcamento intercambio JSON", () => {
-  test("AC-J9: index.html permanece dentro de 68.608 bytes", () => {
+  test("AC-J9: index.html permanece dentro de 73.728 bytes", () => {
     const arquivo = path.join(__dirname, "..", "index.html");
     const bytes = fs.statSync(arquivo).size;
 

@@ -24,7 +24,9 @@ horizontal na prancha, em mouse e touch, sem alterar undo/redo nem o conteúdo d
 - **AC-P4:** O `aria-label` da grade menciona arraste horizontal; teclado e botões ← → permanecem
   inalterados.
 - **AC-P5:** Em viewport touch 390 px, o mesmo comportamento funciona via toque.
-- **AC-P6:** `wc -c index.html` ≤ **68.608** (teto do ADR 004); sem rede em runtime.
+- **AC-P6:** `wc -c index.html` ≤ **73.728** (teto vigente no ADR 006); sem rede em runtime.
+- **AC-P7:** O minimap na command bar mostra casas 0–24; ticks na janela visível usam
+  `aria-pressed="true"`; clique em um tick chama `setStartFret` para essa casa.
 
 ## Fora de escopo
 

@@ -329,10 +329,9 @@ Não haverá telemetria remota. O editor deve oferecer observabilidade para o us
 - O fluxo criar → selecionar → editar → remover → desfazer é executável apenas por teclado.
 - No Chrome estável da máquina de desenvolvimento, o p95 de 100 atualizações de estado, após dez
   aquecimentos, permanece abaixo de 16 ms para 72 posições fretadas + seis alvos do nut.
-- O arquivo-fonte UTF-8 `index.html` permanece em até **59.392** bytes, medido por
-  `wc -c index.html`; não há artefato minificado separado. O teto anterior (57.344) foi
-  substituído pelo [`ADR 002`](../adr/002-budget-bytes-transpor-forma.md) para caber a feature
-  incremental [`transpose-shape`](transpose-shape.md).
+- O arquivo-fonte UTF-8 `index.html` permanece em até **73.728** bytes, medido por
+  `wc -c index.html`; não há artefato minificado separado. O teto vigente é o
+  [`ADR 006`](../adr/006-budget-bytes-selection-controls.md).
 - Não há dependências externas nem requisições de rede em runtime.
 - Qualquer motion respeita `prefers-reduced-motion`.
 

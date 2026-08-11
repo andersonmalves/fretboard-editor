@@ -71,7 +71,14 @@ h1{margin:0;font-size:clamp(1.35rem,2.2vw,2rem);font-weight:680;letter-spacing:-
 .field>label,.field-label{color:var(--color-text-muted);font-size:var(--text-label);font-weight:700;letter-spacing:.07em;text-transform:uppercase}
 .field.tuning{min-width:210px}
 .field.title{flex:1;min-width:180px;max-width:360px}
-.field.position{width:160px}
+.field.position{min-width:200px;width:auto;flex:1;max-width:380px}
+.window-map{display:flex;gap:2px;margin-top:4px}
+.window-tick{flex:1;min-width:0;height:16px;padding:0;border:1px solid var(--color-border);border-radius:2px;background:var(--color-panel-raised);cursor:pointer}
+.window-tick[aria-pressed="true"]{background:var(--color-selection);border-color:var(--color-selection-strong)}
+.window-tick:focus-visible{outline:2px solid var(--color-focus);outline-offset:1px}
+.mobile-quick{display:none;gap:var(--space-sm);margin-bottom:var(--space-sm)}
+.mobile-quick .tool-bar-button{flex:1;min-height:var(--control-min)}
+.mobile-swatch{width:var(--control-min);height:var(--control-min);border-radius:50%;border:2px solid var(--color-border);flex-shrink:0}
 .control,.button{min-height:var(--control-min);border:1px solid var(--color-border);border-radius:var(--radius-sm);background:var(--color-panel-raised);color:var(--color-text-primary)}
 .control{width:100%;padding:9px 11px}
 .control:hover,.button:hover:not(:disabled){border-color:var(--color-text-muted)}
@@ -111,22 +118,25 @@ h1{margin:0;font-size:clamp(1.35rem,2.2vw,2rem);font-weight:680;letter-spacing:-
 .note-badge{display:grid;place-items:center;width:52px;height:52px;border-radius:50%;background:var(--color-artboard-bg);color:var(--color-diagram-ink);font:750 1rem/1 ui-monospace,SFMono-Regular,Consolas,monospace}
 .note-badge[data-long="true"]{font-size:.7rem}
 .selection-kicker{color:var(--color-text-muted);font-size:var(--text-label);text-transform:uppercase;letter-spacing:.08em}
+.field-hint{color:var(--color-text-muted);font-size:.74rem}
 .selection-name{margin-top:3px;font-weight:700}
 .type-group{display:grid;gap:var(--space-sm)}
-.type-group.tool-bar-group{grid-template-columns:repeat(4,minmax(0,1fr))}
-.type-group.is-disabled{opacity:.45;pointer-events:none}
+.type-group.tool-bar-group{grid-template-columns:repeat(3,minmax(0,1fr))}
 .tool-bar-button{min-width:0;min-height:54px;border:1px solid var(--color-border);border-radius:var(--radius-sm);background:var(--color-panel-raised);color:var(--color-text-muted);cursor:pointer;font-size:.74rem;font-weight:700;line-height:1.2;white-space:normal}
 .tool-bar-button span{display:block;margin-bottom:2px;font-size:1.1rem}
-.tool-bar-button[aria-pressed="true"]{border-color:var(--color-selection);background:var(--color-selection);color:var(--color-white)}
+.tool-bar-button[aria-pressed="true"]{border-color:var(--color-selection);background:var(--color-selection);color:var(--color-white);box-shadow:inset 0 0 0 2px var(--color-white)}
+.tool-bar-group .tool-bar-button[data-tool]{grid-column:1/-1;min-height:44px}
 .tool-bar-button:disabled{cursor:not-allowed}
 .connection-list{margin:0;padding:0;list-style:none;display:grid;gap:var(--space-sm)}
 .connection-item{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:.78rem}
 .connection-remove{min-height:var(--control-min);padding:6px var(--space-md);font-size:var(--text-label)}
-.color-group{display:flex;gap:var(--space-sm);flex-wrap:wrap;margin-top:3px}
-.color-swatch{width:28px;height:28px;border-radius:50%;border:2px solid var(--color-border);cursor:pointer;padding:0;position:relative}
-.color-swatch:hover{border-color:var(--color-text-muted)}
+.field[hidden]{display:none}
+.color-group{display:grid;grid-template-columns:repeat(4,44px);justify-content:space-between;gap:var(--space-sm);margin-top:3px}
+.color-swatch{width:44px;height:44px;border-radius:50%;border:4px solid var(--color-panel-bg);box-shadow:0 0 0 1px var(--color-border);cursor:pointer;padding:0;position:relative}
+.color-swatch:hover{box-shadow:0 0 0 2px var(--color-text-muted)}
 .color-swatch:focus-visible{outline:3px solid var(--color-focus);outline-offset:2px}
-.color-swatch[aria-checked="true"]{border-color:var(--color-focus);box-shadow:0 0 0 2px var(--color-focus)}
+.color-swatch[aria-checked="true"]{box-shadow:0 0 0 3px var(--color-focus)}
+.color-swatch[aria-checked="true"]:after{content:"✓";color:#fff;font-weight:800;text-shadow:0 1px 2px #000}
 .inspector-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-sm)}
 .inspector-actions .button{min-width:0;white-space:normal;font-size:.72rem;padding-inline:8px}
 .shortcut-list{display:grid;grid-template-columns:auto 1fr;gap:7px 10px;margin:0;padding:0;color:var(--color-text-muted);font-size:.75rem}
@@ -135,11 +145,12 @@ kbd{display:inline-block;min-width:25px;padding:2px 5px;border:1px solid var(--c
 .status{margin:var(--space-lg) 2px 0;min-height:22px;color:var(--color-success);font-size:var(--text-body)}
 .sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
 @media(max-width:980px){
-  .command-bar{flex-wrap:wrap}.command-spacer{display:none}.workspace{grid-template-columns:1fr}.inspector{position:static}.inspector-body{grid-template-columns:minmax(180px,1fr) minmax(220px,1.4fr);align-items:start}.inspector-actions,.shortcut-list{grid-column:2}.field.tuning{flex:1}.actions-cluster{margin-left:auto}
+  .command-bar{flex-wrap:wrap}.command-spacer{display:none}.workspace{grid-template-columns:1fr}.inspector{position:static}.inspector-body{grid-template-columns:1fr;align-items:start}.inspector-actions,.shortcut-list{grid-column:auto}.field.tuning{flex:1}.actions-cluster{margin-left:auto}
 }
 @media(max-width:767px){
   .app{padding:12px}.masthead{align-items:center;margin-bottom:14px}.edition{display:none}.brand-mark{width:38px;height:38px}.masthead p{font-size:.78rem}
-  .command-bar{display:grid;grid-template-columns:1fr auto;padding:var(--space-md)}.field.tuning,.field.position,.field.title{width:auto;min-width:0}.field.title{grid-column:1/-1}.field.position{grid-column:1/-1}.position-control{grid-template-columns:var(--control-min) 1fr var(--control-min)}.actions-cluster{grid-column:2;grid-row:1;margin-top:0}.transpose-cluster{grid-column:1/-1;margin-top:0}.transpose-cluster .button{flex:1}.clear-button{grid-column:1/-1;margin-top:0}
+  .command-bar{display:grid;grid-template-columns:1fr;padding:var(--space-md)}.field.tuning,.field.position,.field.title{width:auto;min-width:0;grid-column:1}.field.position{max-width:none}.position-control{grid-template-columns:var(--control-min) 1fr var(--control-min)}.actions-cluster{grid-column:1;grid-row:2;margin-top:0;justify-content:flex-end}.transpose-cluster{grid-column:1;margin-top:0}.transpose-cluster .button{flex:1}.clear-button{grid-column:1;margin-top:0}
+  .mobile-quick{display:flex}
   .workspace{gap:var(--space-md)}.panel-header{padding:11px 12px}.artboard-pad{padding:7px}.board-canvas{aspect-ratio:12/11}.board-caption{display:block}.board-caption span{display:block;text-align:left!important}
   .inspector-body{display:grid;grid-template-columns:1fr;padding:var(--space-lg)}.inspector-actions,.shortcut-list{grid-column:auto}.grid-cell{min-width:var(--control-min);min-height:var(--control-min)}.status{position:fixed;z-index:10;left:12px;right:12px;bottom:12px;margin:0;padding:11px 13px;border:1px solid var(--color-border);border-radius:var(--radius-sm);background:var(--color-panel-bg);box-shadow:0 8px 20px var(--color-shadow);opacity:0;pointer-events:none}.status.visible{opacity:1}
 }
@@ -147,7 +158,7 @@ kbd{display:inline-block;min-width:25px;padding:2px 5px;border:1px solid var(--c
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important;animation:none!important}.button:active:not(:disabled){transform:none}}
 @media print{
   @page{size:A4 landscape;margin:10mm}
-  .skip-link,.masthead,.command-bar,.inspector,.board-caption,.status,.panel-header,.hit-grid{display:none!important}
+  .skip-link,.masthead,.command-bar,.inspector,.board-caption,.status,.panel-header,.hit-grid,.mobile-quick{display:none!important}
   html,body{background:#fff;color:#000}
   .app{width:auto;max-width:none;padding:0;margin:0}
   .workspace{display:block}
@@ -183,6 +194,7 @@ kbd{display:inline-block;min-width:25px;padding:2px 5px;border:1px solid var(--c
         <input class="control" id="start-fret" type="number" min="0" max="24" inputmode="numeric" value="0" aria-describedby="start-fret-error">
         <button class="button icon" id="next-fret" type="button" aria-label="Avançar uma casa">→</button>
       </div>
+      <div class="window-map" id="window-map" role="group" aria-label="Mapa de casas 0 a 24"></div>
       <p class="error" id="start-fret-error"></p>
     </div>
     <div class="field title">
@@ -216,6 +228,11 @@ kbd{display:inline-block;min-width:25px;padding:2px 5px;border:1px solid var(--c
     <section class="panel artboard-panel" aria-labelledby="artboard-title">
       <div class="panel-header"><h2 class="panel-title" id="artboard-title">Prancha</h2><div class="window-readout" id="window-readout"></div></div>
       <div class="artboard-pad">
+        <div class="mobile-quick" aria-label="Ferramentas rápidas">
+          <button class="tool-bar-button" type="button" data-type="filled" aria-pressed="true"><span aria-hidden="true">●</span>Marcador</button>
+          <button class="tool-bar-button" type="button" data-tool="connect" aria-pressed="false"><span aria-hidden="true">╱</span>Ligar</button>
+          <div class="mobile-swatch" id="mobile-color-swatch" aria-hidden="true"></div>
+        </div>
         <div class="board-canvas" id="board-canvas">
           <svg id="fretboard-svg" viewBox="0 0 1200 440" role="img" aria-labelledby="svg-title svg-description"></svg>
           <div class="hit-grid" id="fretboard-grid" role="grid" aria-label="Posições do braço. Arraste horizontalmente para mover a janela de casas; setas e Enter ou Espaço para navegar."></div>
@@ -225,36 +242,16 @@ kbd{display:inline-block;min-width:25px;padding:2px 5px;border:1px solid var(--c
     </section>
 
     <aside class="panel inspector" aria-labelledby="inspector-title">
-      <div class="panel-header"><h2 class="panel-title" id="inspector-title">Seleção</h2><span class="window-readout" id="selection-coordinate">—</span></div>
-      <div class="inspector-body">
-        <div class="selection-card">
-          <div class="note-badge" id="note-badge" aria-hidden="true">—</div>
-          <div><div class="selection-kicker" id="selection-kicker">Nenhum marcador</div><div class="selection-name" id="selection-name">Escolha uma posição</div></div>
-        </div>
-        <div class="field">
-          <span class="field-label" id="marker-tool-label">Marcador</span>
-          <div class="type-group tool-bar-group" id="marker-tool-bar" role="toolbar" aria-labelledby="marker-tool-label">
-            <button class="tool-bar-button" type="button" data-type="filled" aria-pressed="true"><span aria-hidden="true">●</span>Preenchido</button>
-            <button class="tool-bar-button" type="button" data-type="outline" aria-pressed="false"><span aria-hidden="true">○</span>Vazado</button>
-            <button class="tool-bar-button" type="button" data-type="muted" aria-pressed="false"><span aria-hidden="true">×</span>Abafado</button>
-            <button class="tool-bar-button" type="button" data-tool="connect" aria-pressed="false"><span aria-hidden="true">╱</span>Ligar</button>
-          </div>
-        </div>
-        <div class="field">
-          <span class="field-label" id="color-label">Cor</span>
-          <div class="color-group" role="radiogroup" aria-labelledby="color-label" id="color-group"></div>
-        </div>
-        <div class="field">
-          <label for="label-input">Rótulo opcional</label>
-          <input class="control" id="label-input" type="text" maxlength="12" placeholder="Ex.: R, 3, 5" autocomplete="off">
-          <span class="selection-kicker">Até 6 caracteres visíveis</span>
-        </div>
+      <div class="panel-header"><h2 class="panel-title" id="inspector-title">Seleção</h2><span class="window-readout" id="selection-coordinate">—</span></div><div class="inspector-body">
+        <div class="selection-card"><div class="note-badge" id="note-badge" aria-hidden="true">—</div><div><div class="selection-kicker" id="selection-kicker">Nenhum marcador</div><div class="selection-name" id="selection-name">Escolha uma posição</div></div></div>
+        <div class="field"><span class="field-label" id="marker-tool-label">Ferramenta</span><div class="type-group tool-bar-group" id="marker-tool-bar" role="toolbar" aria-labelledby="marker-tool-label">
+          <button class="tool-bar-button" type="button" data-type="filled" aria-pressed="true"><span aria-hidden="true">●</span>Preenchido</button><button class="tool-bar-button" type="button" data-type="outline" aria-pressed="false"><span aria-hidden="true">○</span>Vazado</button><button class="tool-bar-button" type="button" data-type="muted" aria-pressed="false"><span aria-hidden="true">×</span>Abafado</button><button class="tool-bar-button" type="button" data-tool="connect" aria-pressed="false"><span aria-hidden="true">╱</span>Ligar marcadores</button>
+        </div><span class="field-hint" id="tool-hint">Define o próximo marcador</span></div>
+        <div class="field"><span class="field-label" id="color-label">Cor</span><div class="color-group" role="radiogroup" aria-labelledby="color-label" id="color-group"></div></div>
+        <div class="field"><label for="label-input">Rótulo opcional</label><input class="control" id="label-input" type="text" maxlength="12" placeholder="Ex.: R, 3, 5" autocomplete="off"><span class="selection-kicker">Até 6 caracteres visíveis</span></div>
         <div class="field" id="connection-field" hidden><span class="field-label">Ligações</span><ul class="connection-list" id="connection-list"></ul></div>
-        <div class="inspector-actions">
-          <button class="button danger" id="remove-button" type="button" disabled>Remover marcador</button>
-          <button class="button" id="deselect-button" type="button" disabled>Desmarcar</button>
-        </div>
-        <dl class="shortcut-list"><dt><kbd>↑↓←→</kbd></dt><dd>Navegar</dd><dt>Arrastar</dt><dd>Mover janela</dd><dt><kbd>Enter</kbd></dt><dd>Criar ou selecionar</dd><dt><kbd>Delete</kbd></dt><dd>Remover seleção</dd><dt><kbd>Esc</kbd></dt><dd>Desmarcar</dd></dl>
+        <div class="inspector-actions"><button class="button danger" id="remove-button" type="button" disabled>Remover marcador</button><button class="button" id="deselect-button" type="button" disabled>Desmarcar</button></div>
+        <dl class="shortcut-list"><dt><kbd>↑↓←→</kbd></dt><dd>Navegar</dd><dt><kbd>Enter</kbd></dt><dd>Criar ou selecionar</dd><dt><kbd>Delete</kbd></dt><dd>Remover seleção</dd><dt><kbd>Esc</kbd></dt><dd>Desmarcar</dd></dl>
       </div>
     </aside>
   </div>
@@ -315,7 +312,10 @@ const refs={
   colorLabel:document.querySelector("#color-label"),
   markerToolBar:document.querySelector("#marker-tool-bar"),
   connectionField:document.querySelector("#connection-field"),
-  connectionList:document.querySelector("#connection-list")
+  connectionList:document.querySelector("#connection-list"),
+  toolHint:document.querySelector("#tool-hint"),
+  windowMap:document.querySelector("#window-map"),
+  mobileSwatch:document.querySelector("#mobile-color-swatch")
 };
 const cv=refs.grid.parentElement;
 
@@ -345,6 +345,7 @@ function hiddenMarkers(){const positions=visiblePositions();return history.prese
 function offscreenNotice(){const count=hiddenMarkers().length;return count?`${count} ${count===1?"marcador":"marcadores"} fora da janela`:""}
 function offscreenSuffix(){const notice=offscreenNotice();return notice?` ${notice}.`:""}
 function exportWarning(){const count=hiddenMarkers().length;return count?` ${offscreenNotice()} ${count===1?"não entrou":"não entraram"} no arquivo.`:""}
+function fretInWindow(fret){if(fret===0)return nutVisible();return visibleFretNumbers().includes(fret)}
 function normalizeLabel(value){return Array.from(value.replace(/[\u0000-\u001f\u007f]/g,"").replace(/\s+/g," ").trim()).slice(0,6).join("")}
 function normalizeDiagramTitle(value){const clean=Array.from(value.replace(/[\u0000-\u001f\u007f]/g,"").replace(/\s+/g," ").trim()).slice(0,40).join("");return clean||DEFAULT_DIAGRAM_TITLE}
 function normalizeType(type,fret){return fret===0&&type==="filled"?"outline":type}
@@ -374,14 +375,15 @@ function redo(){if(!history.future.length){announce("Nada para refazer.",true);r
 
 function syncToolBarButtons(){document.querySelectorAll(".tool-bar-button").forEach(button=>{if(button.dataset.tool==="connect")button.setAttribute("aria-pressed",String(editor.activeTool==="connect"));else if(button.dataset.type)button.setAttribute("aria-pressed",String(editor.activeTool==="marker"&&button.dataset.type===editor.activeMarkerType))})}
 function setActiveType(type){editor.activeMarkerType=type;syncToolBarButtons()}
-function syncColorSwatches(color){refs.colorGroup.querySelectorAll(".color-swatch").forEach(swatch=>{const checked=swatch.dataset.color===String(color??"");swatch.setAttribute("aria-checked",String(checked));swatch.setAttribute("tabindex",checked?"0":"-1")})}
-function setActiveMarkerColor(color){editor.activeMarkerColor=color;if(editor.activeTool==="marker")syncColorSwatches(color)}
-function setActiveConnectionColor(color){editor.activeConnectionColor=color;if(editor.activeTool==="connect")syncColorSwatches(color)}
+function syncColorSwatches(color){refs.colorGroup.querySelectorAll(".color-swatch").forEach(swatch=>{const checked=swatch.dataset.color===String(color??"");swatch.setAttribute("aria-checked",String(checked));swatch.setAttribute("tabindex",checked?"0":"-1")});syncMobileSwatch()}
+function setActiveMarkerColor(color){editor.activeMarkerColor=color;if(editor.activeTool==="marker")syncColorSwatches(color);else syncMobileSwatch()}
+function setActiveConnectionColor(color){editor.activeConnectionColor=color;if(editor.activeTool==="connect")syncColorSwatches(color);else syncMobileSwatch()}
+function syncMobileSwatch(){const activeColor=editor.activeTool==="connect"?editor.activeConnectionColor:editor.activeMarkerColor;const activeToken=activeColor?MARKER_COLORS.find(entry=>entry.value===activeColor)?.token:"--color-marker-default";refs.mobileSwatch.style.backgroundColor=cssTokenColor(activeToken||"--color-marker-default")}
 function applyColorChoice(color,label){if(editor.activeTool==="connect"){setActiveConnectionColor(color);announce(`Cor ${label.toLowerCase()} ativa.`);return}const marker=selectedMarker();setActiveMarkerColor(color);if(!marker){announce(`Cor ${label.toLowerCase()} ativa.`);return}editSelected({color},`Cor alterada para ${label.toLowerCase()}.`)}
 function colorChoiceFromSwatch(swatch){return MARKER_COLORS.find(entry=>String(entry.value??"")===swatch.dataset.color)||null}
 function initColorGroup(){const fragment=document.createDocumentFragment();MARKER_COLORS.forEach(entry=>{const btn=document.createElement("button");btn.type="button";btn.className="color-swatch";btn.style.backgroundColor=cssTokenColor(entry.token);btn.dataset.color=entry.value??"";btn.setAttribute("role","radio");btn.setAttribute("aria-checked","false");btn.setAttribute("tabindex","-1");btn.setAttribute("aria-label",entry.label);btn.addEventListener("click",()=>applyColorChoice(entry.value,entry.label));fragment.append(btn)});refs.colorGroup.append(fragment);setActiveMarkerColor(editor.activeMarkerColor)}
 function handleColorKey(event){const swatches=[...refs.colorGroup.querySelectorAll(".color-swatch")];const index=swatches.findIndex(swatch=>swatch.getAttribute("tabindex")==="0");if(index<0)return;if(event.key==="ArrowRight"||event.key==="ArrowDown"){event.preventDefault();const next=swatches[(index+1)%swatches.length];const choice=colorChoiceFromSwatch(next);if(choice)applyColorChoice(choice.value,choice.label);next.focus()}else if(event.key==="ArrowLeft"||event.key==="ArrowUp"){event.preventDefault();const previous=swatches[(index-1+swatches.length)%swatches.length];const choice=colorChoiceFromSwatch(previous);if(choice)applyColorChoice(choice.value,choice.label);previous.focus()}else if(event.key===" "||event.key==="Enter"){event.preventDefault();const choice=colorChoiceFromSwatch(swatches[index]);if(choice)applyColorChoice(choice.value,choice.label)}}
-function setActiveTool(tool,silent=false){editor.activeTool=tool;editor.linkFrom=null;syncToolBarButtons();const d=tool==="connect";document.querySelectorAll(".tool-bar-button[data-type]").forEach(b=>{b.disabled=d});refs.markerToolBar.classList.toggle("is-disabled",d);refs.colorLabel.textContent=d?"Cor da ligação":"Cor";syncColorSwatches(d?editor.activeConnectionColor:editor.activeMarkerColor);render();if(!silent)announce(d?"Ferramenta Ligar ativa.":"Ferramenta Marcador ativa.")}
+function setActiveTool(tool,silent=false){editor.activeTool=tool;editor.linkFrom=null;syncToolBarButtons();const d=tool==="connect";refs.colorLabel.textContent=d?"Cor da ligação":"Cor";syncColorSwatches(d?editor.activeConnectionColor:editor.activeMarkerColor);syncMobileSwatch();render();if(!silent)announce(d?"Ferramenta Ligar ativa.":"Ferramenta Marcador ativa.")}
 function createConnection(fromId,toId){const pair=normalizeConnectionPair(fromId,toId);if(!pair){announce("Escolha dois marcadores diferentes.",true);return}const [a,b]=pair;if(!markerById(a)||!markerById(b)){announce("Marcadores inválidos.",true);return}const key=connectionKey(a,b);if(history.present.connections.some(link=>connectionKey(link.a,link.b)===key)){editor.linkFrom=null;render();announce("Ligação já existe.",true);return}const dest=markerById(b);editor.linkFrom=null;commitContent(content=>content.connections.push({a,b,color:editor.activeConnectionColor}),`Ligação criada (${dest.stringIndex+1}/${dest.fret===0?"nut":dest.fret}).`,b)}
 function removeConnection(a,b){commitContent(content=>{content.connections=content.connections.filter(link=>!(link.a===a&&link.b===b))},"Ligação removida.",editor.selectedMarkerId)}
 function activateConnectMarker(marker){editor.selectedMarkerId=marker.id;if(!editor.linkFrom){editor.linkFrom=marker.id;render();announce(`Origem: ${marker.stringIndex+1}/${marker.fret===0?"nut":marker.fret}. Escolha o destino.`);return}if(editor.linkFrom===marker.id){editor.linkFrom=null;render();announce("Origem cancelada.");return}createConnection(editor.linkFrom,marker.id)}
@@ -468,15 +470,17 @@ function handleGridKey(event){const stringIndex=Number(event.currentTarget.datas
 function mirrorLabel(value){if(refs.label.value!==value)refs.label.value=value}
 function mirrorDiagramTitle(value){if(refs.diagramTitle.value!==value)refs.diagramTitle.value=value}
 function renderConnectionList(marker){if(!marker||!connectionsForMarker(marker.id).length){refs.connectionField.hidden=true;refs.connectionList.replaceChildren();return}refs.connectionField.hidden=false;const fragment=document.createDocumentFragment();connectionsForMarker(marker.id).forEach(link=>{const item=document.createElement("li");item.className="connection-item";const label=document.createElement("span");label.textContent=linkLabel(link,marker.id);const button=document.createElement("button");button.type="button";button.className="button danger connection-remove";button.textContent="Remover ligação";button.addEventListener("click",()=>removeConnection(link.a,link.b));item.append(label,button);fragment.append(item)});refs.connectionList.replaceChildren(fragment)}
+function renderWindowMap(){const fragment=document.createDocumentFragment();for(let fret=0;fret<=MAX_FRET;fret+=1){const button=document.createElement("button");button.type="button";button.className="window-tick";button.dataset.fret=String(fret);button.setAttribute("aria-pressed",String(fretInWindow(fret)));button.setAttribute("aria-label",fret===0?"Nut":`Casa ${fret}`);button.title=fret===0?"Nut":String(fret);button.addEventListener("click",()=>setStartFret(fret));fragment.append(button)}refs.windowMap.replaceChildren(fragment)}
 function renderInspector(){
   const marker=selectedMarker();const hasMarkers=history.present.markers.length;const hasContent=hasMarkers||history.present.connections.length;refs.remove.disabled=!marker;refs.deselect.disabled=!marker&&!editor.linkFrom;refs.clear.disabled=!hasContent;refs.undo.disabled=!history.past.length;refs.redo.disabled=!history.future.length;refs.transposeDown.disabled=!hasMarkers;refs.transposeUp.disabled=!hasMarkers;refs.previous.disabled=editor.startFret===0;refs.next.disabled=editor.startFret>=maxStartFret();
+  refs.toolHint.textContent=editor.activeTool==="connect"?"Escolha um estilo para voltar a marcar":marker?"Edita o marcador selecionado":"Define o próximo marcador";
   if(marker){const note=noteAt(marker.stringIndex,marker.fret);const shown=displayLabel(marker);editor.activeCustomLabel=marker.customLabel;if(editor.activeTool==="marker"){setActiveType(marker.type);setActiveMarkerColor(marker.color??null)}refs.badge.textContent=shown;refs.badge.dataset.long=String(shown.length>3);refs.kicker.textContent=marker.customLabel?`Rótulo ${marker.customLabel} · nota ${spokenNote(note)}`:`Nota ${spokenNote(note)}`;refs.selectionName.textContent=`Corda ${marker.stringIndex+1} · ${marker.fret===0?"nut":`casa ${marker.fret}`}`;refs.coordinate.textContent=`S${marker.stringIndex+1} / F${String(marker.fret).padStart(2,"0")}`;mirrorLabel(marker.customLabel)}else{refs.badge.textContent="—";refs.badge.dataset.long="false";refs.kicker.textContent=editor.activeTool==="connect"?"Modo ligar":"Nenhum marcador";refs.selectionName.textContent=editor.linkFrom?"Escolha o destino":"Escolha uma posição";refs.coordinate.textContent="—";mirrorLabel(editor.activeCustomLabel)}
   if(editor.activeTool==="connect")syncColorSwatches(editor.activeConnectionColor);
   renderConnectionList(marker);
-  const frets=visibleFretNumbers();refs.readout.textContent=frets.length?`${nutVisible()?"NUT + ":""}${String(frets[0]).padStart(2,"0")}—${String(frets.at(-1)).padStart(2,"0")}`:"NUT";refs.tuning.value=history.present.tuningPresetId;
+  const frets=visibleFretNumbers();refs.readout.textContent=frets.length?`${nutVisible()?"NUT + ":""}${String(frets[0]).padStart(2,"0")}—${String(frets.at(-1)).padStart(2,"0")}`:"NUT";refs.tuning.value=history.present.tuningPresetId;syncMobileSwatch();
   const notice=offscreenNotice();refs.hint.textContent=notice||"Arraste horizontalmente para mover a janela · nota pela afinação";refs.hint.classList.toggle("offscreen",Boolean(notice));mirrorDiagramTitle(displayedDiagramTitle())
 }
-function render(){const restoreGridFocus=document.activeElement?.classList.contains("grid-cell");keepSelectionValid();renderSvg();renderGrid();renderInspector();if(restoreGridFocus){const {stringIndex,fret}=editor.focusedPosition;refs.grid.querySelector(`[data-string-index="${stringIndex}"][data-fret="${fret}"]`)?.focus({preventScroll:true})}}
+function render(){const restoreGridFocus=document.activeElement?.classList.contains("grid-cell");keepSelectionValid();renderSvg();renderGrid();renderWindowMap();renderInspector();if(restoreGridFocus){const {stringIndex,fret}=editor.focusedPosition;refs.grid.querySelector(`[data-string-index="${stringIndex}"][data-fret="${fret}"]`)?.focus({preventScroll:true})}}
 
 cv.addEventListener("pointerdown",e=>{if(e.button!==0)return;pan={id:e.pointerId,x0:e.clientX,y0:e.clientY,s:editor.startFret,a:0}});
 cv.addEventListener("pointermove",e=>{if(!pan||pan.id!==e.pointerId)return;const dx=e.clientX-pan.x0,dy=e.clientY-pan.y0;if(!pan.a){if(Math.abs(dx)<8&&Math.abs(dy)<8)return;if(Math.abs(dy)>Math.abs(dx)){pan=null;return}pan.a=1;cv.classList.add("is-panning");cv.setPointerCapture(e.pointerId);e.preventDefault()}const r=cv.getBoundingClientRect(),fp=geometry().fretWidth/GEOMETRY.width*r.width||1,n=Math.min(maxStartFret(),Math.max(0,pan.s+Math.round(-dx/fp)));if(n!==editor.startFret)setStartFret(n,"silent")});
@@ -515,6 +519,7 @@ function benchmarkRender(){const samples=[];for(let index=0;index<110;index+=1){
 initColorGroup();
 initExportMenu();
 refs.colorGroup.addEventListener("keydown",handleColorKey);
+syncMobileSwatch();
 window.__fretboardEditor={getState:()=>({content:cloneContent(history.present),editor:{...editor}}),activatePosition,setActiveTool,createConnection,setStartFret,undo,redo,exportedSvgMarkup,serializeDiagram,parseDiagramDocument,importDiagramText,applyImportedDiagram,render,benchmarkRender};
 render();
 if(new URLSearchParams(location.search).has("benchmark"))requestAnimationFrame(()=>announce(`Benchmark local: p95 ${benchmarkRender().toFixed(2)} ms.`));

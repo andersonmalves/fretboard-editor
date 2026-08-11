@@ -42,11 +42,16 @@ class FretboardPage {
     this.coordinate = page.locator("#selection-coordinate");
     this.selectionName = page.locator("#selection-name");
     this.hint = page.locator("#board-hint");
+    this.toolHint = page.locator("#tool-hint");
+    this.windowMap = page.locator("#window-map");
+    this.mobileQuick = page.locator(".mobile-quick");
+    this.mobileSwatch = page.locator("#mobile-color-swatch");
     this.kicker = page.locator("#selection-kicker");
     this.colorGroup = page.locator("#color-group");
     this.diagramTitle = page.locator("#diagram-title");
     this.connectionField = page.locator("#connection-field");
     this.connectionList = page.locator("#connection-list");
+    this.markerToolBar = page.locator("#marker-tool-bar");
     this.consoleErrors = [];
   }
 
@@ -81,6 +86,14 @@ class FretboardPage {
     return box?.width ?? 50;
   }
 
+  windowTick(fret) {
+    return this.windowMap.locator(`.window-tick[data-fret="${fret}"]`);
+  }
+
+  async activeWindowTicks() {
+    return this.windowMap.locator('.window-tick[aria-pressed="true"]').all();
+  }
+
   cell(corda, casa) {
     return this.grid.locator(`[data-string-index="${corda - 1}"][data-fret="${casa}"]`);
   }
@@ -91,11 +104,11 @@ class FretboardPage {
   }
 
   toolButton(tipo) {
-    return this.page.locator(`.tool-bar-button[data-type="${tipo}"]`);
+    return this.markerToolBar.locator(`.tool-bar-button[data-type="${tipo}"]`);
   }
 
   workToolButton(tool) {
-    return this.page.locator(`.tool-bar-button[data-tool="${tool}"]`);
+    return this.markerToolBar.locator(`.tool-bar-button[data-tool="${tool}"]`);
   }
 
   async openExportMenu() {
@@ -145,7 +158,9 @@ class FretboardPage {
    */
   async pickColor(label) {
     if (await this.deselect.isEnabled()) await this.deselect.click();
-    await this.colorSwatch(label).click();
+    const swatch = this.colorSwatch(label);
+    await swatch.scrollIntoViewIfNeeded();
+    await swatch.click();
   }
 
   async markerTokenColor(token) {

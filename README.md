@@ -110,7 +110,7 @@ Mais detalhes estão na
 
 Na versão atual:
 
-- `index.html` possui no máximo 68.608 bytes ([ADR 004](adr/004-budget-bytes-pan-window.md)).
+- `index.html` possui no máximo 73.728 bytes ([ADR 006](adr/006-budget-bytes-selection-controls.md)).
 - O renderer mediu p95 inferior a 1 ms em 100 atualizações, após 10 aquecimentos, no ambiente de
   desenvolvimento.
 - Foco sobre a prancha tem contraste de 5,12:1.

@@ -98,4 +98,22 @@ test.describe("Cor do marcador", () => {
     expect(focusedLabel).toBe("Azul");
     await expect(fretboard.colorSwatch("Azul")).toHaveAttribute("aria-checked", "true");
   });
+
+  test("as cores têm alvo de toque de 44 px e confirmação visual", async ({ fretboard }) => {
+    const boxes = await fretboard.colorSwatches().evaluateAll((swatches) =>
+      swatches.map((swatch) => {
+        const box = swatch.getBoundingClientRect();
+        return { width: box.width, height: box.height, x: box.x, y: box.y };
+      })
+    );
+
+    expect(boxes.every(({ width, height }) => width >= 44 && height >= 44)).toBe(true);
+    expect(new Set(boxes.map(({ x }) => Math.round(x))).size).toBe(4);
+    expect(new Set(boxes.map(({ y }) => Math.round(y))).size).toBe(2);
+    await fretboard.colorSwatch("Azul").click();
+    const check = await fretboard
+      .colorSwatch("Azul")
+      .evaluate((swatch) => getComputedStyle(swatch, ":after").content);
+    expect(check).toBe('"✓"');
+  });
 });

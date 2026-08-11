@@ -1,6 +1,21 @@
 const { test, expect } = require("./fixtures");
 
 test.describe("AC-11: janela de casas por viewport", () => {
+  test.describe("320 px", () => {
+    test.use({ viewport: { width: 320, height: 800 } });
+
+    test("o seletor de afinação mantém largura útil e as ações usam outra linha", async ({
+      fretboard
+    }) => {
+      const tuning = await fretboard.tuning.boundingBox();
+      const actions = await fretboard.page.locator(".actions-cluster").boundingBox();
+
+      expect(tuning.width).toBeGreaterThanOrEqual(200);
+      expect(actions.y).toBeGreaterThanOrEqual(tuning.y + tuning.height);
+      expect(await fretboard.page.evaluate(() => document.documentElement.scrollWidth)).toBe(320);
+    });
+  });
+
   test.describe("390 px", () => {
     test.use({ viewport: { width: 390, height: 844 } });
 
@@ -86,7 +101,7 @@ test.describe("AC-12: alvos de toque", () => {
       "#export-menu-toggle",
       "#remove-button",
       "#deselect-button",
-      '.tool-bar-button[data-type="filled"]'
+      '#marker-tool-bar .tool-bar-button[data-type="filled"]'
     ];
 
     for (const seletor of seletores) {

@@ -1,4 +1,4 @@
-const INDEX_HTML_BYTE_BUDGET = 68608;
+const INDEX_HTML_BYTE_BUDGET = 73728;
 
 const base = require("@playwright/test");
 const { FretboardPage } = require("./fretboard-page");
