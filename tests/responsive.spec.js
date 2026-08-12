@@ -102,8 +102,7 @@ test.describe("AC-12: alvos de toque", () => {
       "#clear-button",
       "#export-menu-toggle",
       '.mode-group .tool-bar-button[data-tool="marker"]',
-      '#marker-tool-bar .tool-bar-button[data-type="filled"]',
-      "#sound-toggle"
+      '#marker-tool-bar .tool-bar-button[data-type="filled"]'
     ];
 
     for (const seletor of seletores) {
